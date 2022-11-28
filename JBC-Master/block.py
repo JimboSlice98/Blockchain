@@ -41,7 +41,7 @@ class Block(object):
         self.hash = new_hash
         return new_hash
 
-    # Save a given block as a single JSON file to the chaindata directory
+    # Save a given block as a single JSON file to the chaindata directory (ATTRIBUTES AS STRINGS)
     def self_save(self):
         # Ensure each JSON file consists of leading zeros
         index_string = str(self.index).zfill(6)
@@ -49,7 +49,7 @@ class Block(object):
         with open(filename, 'w') as block_file:
             json.dump(self.to_dict(), block_file)
 
-    # Method to return a given block's attributes as a dictionary
+    # Method to return the string of a given block's attributes as a dictionary
     def to_dict(self):
         info = {}
         info['index'] = str(self.index)

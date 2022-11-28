@@ -34,9 +34,12 @@ def blockchain():
     return json_blocks
 
 
+# Function to receive a given block as a dictionary from another node
 @node.route('/mined', methods=['POST'])
 def mined():
+
     possible_block_dict = request.get_json()
+    possible_block = Block(possible_block_dict)
     print(possible_block_dict)
     print(sched.get_jobs())
     print(sched)
@@ -63,7 +66,7 @@ if __name__ == '__main__':
     if args.mine:
         # in this case, sched is the background sched
         sched.add_job(mine.mine_for_block, kwargs={'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining')  # add the block again
-        sched.add_listener(mine.mine_wfor_block_listener, apscheduler.events.EVENT_JOB_EXECUTED)  # args=sched)
+        sched.add_listener(mine.mine_for_block_listener, apscheduler.events.EVENT_JOB_EXECUTED)  # args=sched)
 
     sched.start()  # want this to start, so we can validate on the schedule and not rely on Flask
 

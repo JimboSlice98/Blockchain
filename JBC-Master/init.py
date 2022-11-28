@@ -21,22 +21,12 @@ def init():
     print('Scanning network for peer nodes:')
     available_ports = []
     occupied_ports = []
-    # for port in tqdm(range(5000, 5003)):  # SOMEHOW MAKE THIS INCLUSIVE SO YOU KNOW WHAT PORTS
-    #     # Check through the list of defined ports to see if any nodes are running
-    #     peer_blockchain_url = 'http://localhost:' + str(port)
-    #     try:
-    #         r = requests.get(peer_blockchain_url)
-    #
-    #     except requests.exceptions.ConnectionError:
-    #         available_ports.append(port)
-    #
-    #     else:
-    #         occupied_ports.append(port)
 
+    # Use websockets to check if any nodes are running on the network
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(2)
     for port in range(5000, 5003):  # SOMEHOW MAKE THIS INCLUSIVE SO YOU KNOW WHAT PORTS
-        # Check through the list of defined ports to see if any nodes are running
+        # Scan through listed in config.py
         try:
             sock.connect(('127.0.0.1', port))
 
@@ -124,21 +114,3 @@ def init():
             print('Genesis block created')
 
     return port
-
-
-def check(host, port, timeout=2):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(timeout)
-    try:
-        sock.connect((host, port))
-    except:
-        return False
-    else:
-        sock.close()
-        return True
-
-
-# print(check('127.0.0.1', 5000, timeout=1))
-# print(check('127.0.0.1', 5001, timeout=1))
-
-init()

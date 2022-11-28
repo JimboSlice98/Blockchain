@@ -25,6 +25,7 @@ import sys
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 
+# Function 1
 def mine_for_block(chain=None, rounds=STANDARD_ROUNDS, start_nonce=0, timestamp=None):
     if not chain:
         chain = sync.sync_local()  # gather last node
@@ -33,12 +34,14 @@ def mine_for_block(chain=None, rounds=STANDARD_ROUNDS, start_nonce=0, timestamp=
     return mine_from_prev_block(prev_block, rounds=rounds, start_nonce=start_nonce, timestamp=timestamp)
 
 
+# Function 2
 def mine_from_prev_block(prev_block, rounds=STANDARD_ROUNDS, start_nonce=0, timestamp=None):
     # create new block with correct
     new_block = utils.create_new_block_from_prev(prev_block=prev_block, timestamp=timestamp)
     return mine_block(new_block, rounds=rounds, start_nonce=start_nonce)
 
 
+# Function 3
 def mine_block(new_block, rounds=STANDARD_ROUNDS, start_nonce=0):
     print("Mining for block %s. start_nonce: %s, rounds: %s" % (new_block.index, start_nonce, rounds))
     # Attempting to find a valid nonce to match the required difficulty
@@ -89,10 +92,11 @@ def broadcast_mined_block(new_block):
     return True
 
 
-def validate_possible_block(possible_block_dict):
-
-    possible_block = Block(possible_block_dict)
+# Function to determine if the received block is valid
+def validate_possible_block(possible_block):
+    # Check if the received block is valid
     if possible_block.is_valid():
+        # Save new valid block
         possible_block.self_save()
 
         # we want to kill and restart the mining block so it knows it lost
