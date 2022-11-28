@@ -1,12 +1,5 @@
-import datetime
-import time
-import json
-import hashlib
 import requests
-import os
-import glob
 import apscheduler
-from apscheduler.schedulers.blocking import BlockingScheduler
 
 # Import from custom scripts
 from block import Block
@@ -15,14 +8,12 @@ import utils
 import sync
 
 
-# if we're running mine.py, we don't want it in the background
-# because the script would return after starting. So we want the
-# BlockingScheduler to run the code.
-sched = BlockingScheduler(standalone=True)
+# import logging
+# import sys
+# logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
-import logging
-import sys
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+
+sched = None
 
 
 # Function 1
@@ -43,52 +34,60 @@ def mine_from_prev_block(prev_block, rounds=STANDARD_ROUNDS, start_nonce=0, time
 
 # Function 3
 def mine_block(new_block, rounds=STANDARD_ROUNDS, start_nonce=0):
-    print("Mining for block %s. start_nonce: %s, rounds: %s" % (new_block.index, start_nonce, rounds))
-    # Attempting to find a valid nonce to match the required difficulty
-    # of leading zeros. We're only going to try 1000
+    # Mine a given block with nonce values in the range dictated by 'start_nonce' and 'rounds'
+    print('MINING FOR BLOCK %s. START NONCE: %s, ROUNDS: %s' % (new_block.index, start_nonce, rounds))
     nonce_range = [i+start_nonce for i in range(rounds)]
     for nonce in nonce_range:
         new_block.nonce = nonce
         new_block.update_self_hash()
+        # If a valid nonce value has been found, the block has been mined
         if str(new_block.hash[0:NUM_ZEROS]) == '0' * NUM_ZEROS:
-            print("block %s mined. Nonce: %s" % (new_block.index, new_block.nonce))
+            print('BLOCK %s MINED. NONCE: %s' % (new_block.index, new_block.nonce))
             assert new_block.is_valid()
             return new_block, rounds, start_nonce, new_block.timestamp
 
-    # couldn't find a hash to work with, return rounds and start_nonce
-    # as well, so we can know what we tried
+    # The block could not be mined with the available nonce values, return the 'start_nonce' and 'rounds' for next job
     return None, rounds, start_nonce, new_block.timestamp
 
 
+# Function triggered upon execution of mining job from BackgroundScheduler
 def mine_for_block_listener(event):
-    # need to check if the finishing job is the mining
+    # Ensure the function is only called for upon mining job completion only
     if event.job_id == 'mining':
+        # Receives a tuple from the scheduler upon job execution
         new_block, rounds, start_nonce, timestamp = event.retval
-        # if didn't mine, new_block is None
-        # we'd use rounds and start_nonce to know what the next
-        # mining task should use
+        # If the new block has been mined
         if new_block:
-            print("Mined a new block")
+            # Save new block and broadcast to peer nodes
+            print('SAVING BLOCK...')
             new_block.self_save()
+            print('BLOCK SAVED')
+            print('BROADCASTING BLOCK TO NETWORK...')
             broadcast_mined_block(new_block)
-            sched.add_job(mine_from_prev_block, args=[new_block], kwargs={'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining')  # add the block again
+            print('BROADCAST COMPLETE')
+
+            # Restart the mining job for the next block
+            sched.add_job(mine_from_prev_block, args=[new_block], kwargs={'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining')
+
+        # No new block has been mined so restart the mining job with increased 'start_nonce'
         else:
-            print(event.retval)
-            sched.add_job(mine_for_block, kwargs={'rounds': rounds, 'start_nonce': start_nonce+rounds, 'timestamp': timestamp}, id='mining')  # add the block again
-            sched.print_jobs()
+            print('\n\nROUNDS FINISHED, THEREFORE RESTARTING MINING')
+            sched.add_job(mine_for_block, kwargs={'rounds': rounds, 'start_nonce': start_nonce+rounds, 'timestamp': timestamp}, id='mining')
 
 
+# Function to broadcast a given mined block to the network
 def broadcast_mined_block(new_block):
-    # We want to hit the other peers saying that we mined a block
-    block_info_dict = new_block.__dict__
+
+    block_info_dict = new_block.to_dict()
     for peer in PEERS:
-        endpoint = "%s%s" % (peer[0], peer[1])
-        # see if we can broadcast it
+        # NEED TO REMOVE CURRENT NODE FROM THE LIST TO BROADCAST
         try:
             r = requests.post(peer+'mined', json=block_info_dict)
+
         except requests.exceptions.ConnectionError:
             print("Peer %s not connected" % peer)
             continue
+
     return True
 
 
@@ -98,28 +97,15 @@ def validate_possible_block(possible_block):
     if possible_block.is_valid():
         # Save new valid block
         possible_block.self_save()
-
-        # we want to kill and restart the mining block so it knows it lost
-        sched.print_jobs()
+        # Remove all mining jobs as they will contain higher nonce ranges
         try:
             sched.remove_job('mining')
             print("removed running mine job in validating possible block")
         except apscheduler.jobstores.base.JobLookupError:
             print("mining job didn't exist when validating possible block")
 
-        print("reading mine for block validating_possible_block")
-        print(sched)
-        print(sched.get_jobs())
-        sched.add_job(mine_for_block, kwargs={'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining')  # add the block again
-        print(sched.get_jobs())
+        # Restart the mining for the next block after the received block
+        sched.add_job(mine_for_block, kwargs={'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining')
 
         return True
     return False
-
-
-if __name__ == '__main__':
-
-    sched.add_job(mine_for_block, kwargs={'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining')  # add the block again
-    sched.add_listener(mine_for_block_listener, apscheduler.events.EVENT_JOB_EXECUTED)
-    sched.start()
-

@@ -20,7 +20,6 @@ def genesis(port):
     # Create first block object and save to local directory
     first_block = mine_first_block(port)
     first_block.self_save()
-    print(first_block.__dict__)
 
 
 def mine_first_block(port):
@@ -33,5 +32,3 @@ def mine_first_block(port):
 
     assert first_block.is_valid()
     return first_block
-
-genesis(5000)

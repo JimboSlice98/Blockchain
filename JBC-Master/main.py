@@ -42,36 +42,31 @@ def blockchain():
 # Function to receive a given block as a dictionary from another node
 @node.route('/mined', methods=['POST'])
 def mined():
-
+    print('Block received from peer node: ')
     possible_block_dict = request.get_json()
     possible_block = Block(possible_block_dict)
     print(possible_block_dict)
-    print(sched.get_jobs())
-    print(sched)
 
-    sched.add_job(mine.validate_possible_block, args=[possible_block_dict], id='validate_possible_block') #add the block again
+    sched.add_job(mine.validate_possible_block, args=[possible_block], id='validate_possible_block')
 
     return jsonify(received=True)
 
 
 if __name__ == '__main__':
 
-    print('Debugging is soo much fun...')
-
     # Initialisation sequence of node
     port = init.init()
 
-    # Start the FLASK server
-    # Create BackgroundScheduling object
-    mine.sched = sched  # to override the BlockingScheduler in the
-    # only mine if we want to
-    if True:
-        # in this case, sched is the background sched
-        sched.add_job(mine.mine_for_block, kwargs={'rounds': STANDARD_ROUNDS, 'start_nonce': 0},
-                      id='mining')  # add the block again
-        sched.add_listener(mine.mine_wfor_block_listener, apscheduler.events.EVENT_JOB_EXECUTED)  # args=sched)
+    # Create BackgroundScheduler object to override BlockingScheduler object in mine.py
+    mine.sched = sched
 
+    # Add a mining job to the BackgroundScheduler
+    sched.add_job(mine.mine_for_block, kwargs={'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining')
+    # Add a listener to detect when job has been executed
+    sched.add_listener(mine.mine_for_block_listener, apscheduler.events.EVENT_JOB_EXECUTED)
+
+    # Start the BackgroundScheduler
     sched.start()  # want this to start, so we can validate on the schedule and not rely on Flask
 
-    # now we know what port to use
+    # Start the FLASK server
     node.run(host='127.0.0.1', port=port)

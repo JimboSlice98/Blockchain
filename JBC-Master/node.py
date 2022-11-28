@@ -44,7 +44,8 @@ def mined():
     print(sched.get_jobs())
     print(sched)
 
-    sched.add_job(mine.validate_possible_block, args=[possible_block_dict], id='validate_possible_block') #add the block again
+    sched.add_job(mine.validate_possible_block, args=[possible_block
+                                                      ], id='validate_possible_block') #add the block again
 
     return jsonify(received=True)
 
