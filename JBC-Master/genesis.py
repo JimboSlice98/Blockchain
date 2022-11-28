@@ -1,20 +1,18 @@
 import os
 import utils
 import glob
+import shutil
 
 # Import from custom scripts
 from config import *
 
 
 def genesis(port):
-    # Check if a local directory exists
-    if not os.path.exists(CHAINDATA_DIR):
-        os.mkdir(CHAINDATA_DIR)
+    # Sanitise local directory
+    if os.path.exists(CHAINDATA_DIR):
+        shutil.rmtree(CHAINDATA_DIR)
 
-    for filepath in glob.glob(os.path.join(CHAINDATA_DIR, '*.json')):
-        os.remove(filepath)
-
-    os.remove(filepath) for filepath in
+    os.mkdir(CHAINDATA_DIR)
 
     # Save .txt file with info about what port a given node in running on
     utils.node_txt(port)

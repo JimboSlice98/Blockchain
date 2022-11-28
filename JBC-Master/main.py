@@ -11,6 +11,7 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.schedulers.background import BackgroundScheduler
 import sys
 import argparse
+import logging
 
 # Import from custom scripts
 from block import Block
@@ -52,26 +53,28 @@ def mined():
 
 if __name__ == '__main__':
 
+    print('Debugging is soo much fun...')
+
     # Initialisation sequence of node
     port = init.init()
 
-    # Start the FLASK server
-    parser = argparse.ArgumentParser(description='JBC Node')
-    parser.add_argument('--mine', '-m', dest='mine', action='store_true')
-    args = parser.parse_args()
-
-    # Save .txt file with info about what port a given node in running on
-    utils.node_txt(port)
-
-    mine.sched = sched  # to override the BlockingScheduler in the
-    # only mine if we want to
-    if args.mine:
-        # in this case, sched is the background sched
-        sched.add_job(mine.mine_for_block, kwargs={'rounds': STANDARD_ROUNDS, 'start_nonce': 0},
-                      id='mining')  # add the block again
-        sched.add_listener(mine.mine_wfor_block_listener, apscheduler.events.EVENT_JOB_EXECUTED)  # args=sched)
-
-    sched.start()  # want this to start, so we can validate on the schedule and not rely on Flask
-
-    # now we know what port to use
-    node.run(host='127.0.0.1', port=port)
+    # # Start the FLASK server
+    # parser = argparse.ArgumentParser(description='JBC Node')
+    # parser.add_argument('--mine', '-m', dest='mine', action='store_true')
+    # args = parser.parse_args()
+    #
+    # # Save .txt file with info about what port a given node in running on
+    # utils.node_txt(port)
+    #
+    # mine.sched = sched  # to override the BlockingScheduler in the
+    # # only mine if we want to
+    # if args.mine:
+    #     # in this case, sched is the background sched
+    #     sched.add_job(mine.mine_for_block, kwargs={'rounds': STANDARD_ROUNDS, 'start_nonce': 0},
+    #                   id='mining')  # add the block again
+    #     sched.add_listener(mine.mine_wfor_block_listener, apscheduler.events.EVENT_JOB_EXECUTED)  # args=sched)
+    #
+    # sched.start()  # want this to start, so we can validate on the schedule and not rely on Flask
+    #
+    # # now we know what port to use
+    # node.run(host='127.0.0.1', port=port)
