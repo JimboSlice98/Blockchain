@@ -52,7 +52,7 @@ def init():
     print('Node started on port: %s' % port)
 
     # ------------------------------------
-    # BIG FUCK-OFF LOGIC FOR STARTING NODE
+    # BIG LOGIC FOR STARTING NODE
     # ------------------------------------
 
     # Condition for no running nodes on network
@@ -108,9 +108,16 @@ def init():
 
         # No JSON files in local directory
         else:
-            print('Creating genesis block...')
-            # Create the first block from scratch
-            genesis.genesis(port)
-            print('Genesis block created')
+            print('Downloading latest blockchain data...')
+            sync.sync(save=True)
+            print('Download complete')
+
+            # Save .txt file with info about what port a given node in running on
+            utils.node_txt(port)
+
+            # print('Creating genesis block...')
+            # # Create the first block from scratch
+            # genesis.genesis(port)
+            # print('Genesis block created')
 
     return port

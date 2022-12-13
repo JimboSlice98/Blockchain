@@ -62,11 +62,11 @@ if __name__ == '__main__':
 
     # Add a mining job to the BackgroundScheduler
     sched.add_job(mine.mine_for_block, kwargs={'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining')
-    # Add a listener to detect when job has been executed
+    # Add a listener to detect when mine job has been executed
     sched.add_listener(mine.mine_for_block_listener, apscheduler.events.EVENT_JOB_EXECUTED)
 
     # Start the BackgroundScheduler
-    sched.start()  # want this to start, so we can validate on the schedule and not rely on Flask
+    sched.start()
 
     # Start the FLASK server
     node.run(host='127.0.0.1', port=port)

@@ -18,9 +18,11 @@ sched = None
 
 # Function 1
 def mine_for_block(chain=None, rounds=STANDARD_ROUNDS, start_nonce=0, timestamp=None):
+    # If no chain object is passed as an argument, gather last block from local directory
     if not chain:
-        chain = sync.sync_local()  # gather last node
+        chain = sync.sync_local()
 
+    # Gather last block from chain object argument
     prev_block = chain.most_recent_block()
     return mine_from_prev_block(prev_block, rounds=rounds, start_nonce=start_nonce, timestamp=timestamp)
 
@@ -81,6 +83,7 @@ def broadcast_mined_block(new_block):
     block_info_dict = new_block.to_dict()
     for peer in PEERS:
         # NEED TO REMOVE CURRENT NODE FROM THE LIST TO BROADCAST
+
         try:
             r = requests.post(peer+'mined', json=block_info_dict)
 
@@ -93,19 +96,35 @@ def broadcast_mined_block(new_block):
 
 # Function to determine if the received block is valid
 def validate_possible_block(possible_block):
-    # Check if the received block is valid
-    if possible_block.is_valid():
-        # Save new valid block
-        possible_block.self_save()
-        # Remove all mining jobs as they will contain higher nonce ranges
-        try:
-            sched.remove_job('mining')
-            print("removed running mine job in validating possible block")
-        except apscheduler.jobstores.base.JobLookupError:
-            print("mining job didn't exist when validating possible block")
+    # Gather the most current local block to validate possible new block
+    chain = sync.sync_local()
+    cur_block = chain.most_recent_block()
 
-        # Restart the mining for the next block after the received block
-        sched.add_job(mine_for_block, kwargs={'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining')
+    # Check point 1) Are the indexes in order
+    if possible_block.index - 1 != cur_block.index:
+        print('VPB: Index error')
+        return False
 
-        return True
-    return False
+    # Check point 2) Are the has values linked
+    if possible_block.prev_hash != cur_block.hash:
+        print('VPB: Hash error')
+        return False
+
+    # Check point 3) Is the hash of a block correct and does it meet the difficulty
+    if not possible_block.is_valid():
+        print('VPB: Block invalid')
+        return False
+
+    # Therefore the new block is valid so needs to be saved
+    possible_block.self_save()
+    # Remove all mining jobs as they will contain higher nonce ranges
+    try:
+        sched.remove_job('mining')
+        print("removed running mine job in validating possible block")
+    except apscheduler.jobstores.base.JobLookupError:
+        print("mining job didn't exist when validating possible block")
+
+    # Restart the mining for the next block after the received block
+    sched.add_job(mine_for_block, kwargs={'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining')
+
+    return True

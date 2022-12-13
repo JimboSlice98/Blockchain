@@ -53,7 +53,9 @@ def sync_overall(save=False):
             print("Peer at %s is running. Gathered their blockchain for analysis." % peer)
             # Store the given peer node's JSON object as a chain object
             peer_blockchain_dict = r.json()
+            # Convert the JSON objects to a list of block objects
             peer_blocks = [Block(bdict) for bdict in peer_blockchain_dict]
+            # Convert the list of block objects to a chain object to check its validity
             peer_chain = Chain(peer_blocks)
             assert peer_chain.is_valid()
 

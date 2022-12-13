@@ -1,11 +1,7 @@
-available_ports = [5000, 5001, 5002, 5003]
+import Testing
 
-port = int(input('Enter port to run node: '))
-while True:
-    if port in available_ports:
-        break
+print(Testing.a)
 
-    else:
-        port = int(input('ERROR: port not available, enter valid port: '))
+Testing.a = 31
 
-print('Node started on port: %s' % port)
+print(Testing.a)

@@ -19,7 +19,7 @@ class Chain(object):
             prev_block = self.blocks[index]
 
             # Check point 1) Are the indexes in order
-            if prev_block.index+1 != cur_block.index:
+            if prev_block.index + 1 != cur_block.index:
                 print('index error')
                 return False
 
@@ -29,7 +29,7 @@ class Chain(object):
                 return False
 
             # Check point 3) Is the hash of a block correct and does it meet the difficulty
-            if not cur_block.is_valid():  # checks the hash
+            if not cur_block.is_valid():
                 print('block invalid')
                 return False
 
