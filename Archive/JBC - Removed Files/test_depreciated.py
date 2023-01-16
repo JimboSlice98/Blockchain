@@ -104,19 +104,19 @@ assert another_blockchain < blockchain
 
 '''
 with freeze_time(zt):
-    poss_block_zero = utils.create_new_block_from_prev(data='Mine test block zero.')
+    poss_block_zero = utils.create_new_block(data='Mine test block zero.')
     mine_test_block_zero = utils.find_valid_nonce(poss_block_zero)
 
 with freeze_time(ft):
-    poss_block_one = utils.create_new_block_from_prev(prev_block=mine_test_block_zero, data='Mine test block one.')
+    poss_block_one = utils.create_new_block(prev_block=mine_test_block_zero, data='Mine test block one.')
     mine_test_block_one = utils.find_valid_nonce(poss_block_one)
 
 with freeze_time(st):
-    poss_block_two = utils.create_new_block_from_prev(prev_block=mine_test_block_one, data='Mine test block two.')
+    poss_block_two = utils.create_new_block(prev_block=mine_test_block_one, data='Mine test block two.')
     mine_test_block_two = utils.find_valid_nonce(poss_block_two)
 
 with freeze_time(tt):
-    poss_block_three = utils.create_new_block_from_prev(prev_block=mine_test_block_two, data='Mine test block three.')
+    poss_block_three = utils.create_new_block(prev_block=mine_test_block_two, data='Mine test block three.')
     mine_test_block_three = utils.find_valid_nonce(poss_block_three)
 
 print(mine_test_block_three.__dict__)
@@ -147,7 +147,7 @@ mine_test_zero_chain = Chain([mine_test_block_zero])
 assert mine_test_zero_chain.is_valid()
 
 with freeze_time(ft):
-    poss_block_one = utils.create_new_block_from_prev(prev_block=mine_test_block_zero, data='Mine test block one.')
+    poss_block_one = utils.create_new_block(prev_block=mine_test_block_zero, data='Mine test block one.')
 
     # mine_block(new_block, rounds=STANDARD_ROUNDS, start_nonce=0)
     new_block, rounds, start_nonce = mine.mine_block(poss_block_one, rounds=1000, start_nonce=0)
