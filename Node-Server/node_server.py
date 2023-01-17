@@ -1,9 +1,12 @@
 from flask import Flask, jsonify, request
 import os
 import json
+from apscheduler.schedulers.background import BackgroundScheduler
+from datetime import datetime
 
 
 node = Flask(__name__)
+sched = BackgroundScheduler(standalone=True)
 
 
 class node_db(object):
@@ -29,32 +32,59 @@ class node_db(object):
         with open(filename, 'w') as database:
             json.dump(data, database)
 
+    # Method to populate the  database object from the local directory
+    def sync_local_dir(self):
+        filepath = 'node_database.json'
+        if os.path.exists(filepath):
+            with open(filepath, 'r') as data_file:
+                try:
+                    # Read JSON database file stored in local directory
+                    data = json.load(data_file)
 
-# Function to create a database object from the local directory
-def sync_local_db():
-    node_database = node_db()
-    filepath = 'node_database.json'
-    if os.path.exists(filepath):
-        with open(filepath, 'r') as data_file:
-            try:
-                # Read JSON database file stored in local directory
-                data = json.load(data_file)
+                except:
+                    print(filepath)
 
-            except:
-                print(filepath)
+        self.master_nodes = data['master_nodes']
+        self.active_nodes = data['active_nodes']
+        self.inactive_nodes = data['inactive_nodes']
 
-    node_database.master_nodes = data['master_nodes']
-    node_database.active_nodes = data['active_nodes']
-    node_database.inactive_nodes = data['inactive_nodes']
+    def clean(self):
+        self.sync_local_dir()
+        time_stamp = int(datetime.utcnow().strftime('%Y%m%d%H%M'))
 
-    return node_database
+        move_addr = []
+        del_addr = []
+
+        # Iterate through the active node addresses and remove inactive nodes (>10 mins)
+        for key in self.active_nodes:
+            if time_stamp - int(self.active_nodes[key]) > 10:
+                # Add inactive node to the inactive list
+                self.inactive_nodes[key] = self.active_nodes[key]
+                move_addr.append(key)
+
+        # Iterate through the inactive node addresses and remove dead nodes (>1 day)
+        for key in self.inactive_nodes:
+            # Add inactive node to the inactive list
+            if time_stamp - int(self.inactive_nodes[key]) > 2400:
+                del_addr.append(key)
+
+        # Delete inactive nodes from the active list
+        for key in move_addr:
+            del self.active_nodes[key]
+
+        # Delete dead nodes from the inactive list
+        for key in del_addr:
+            del self.inactive_nodes[key]
+
+        self.self_save()
 
 
 # Function to return a dictionary containing the addresses of active nodes on the network
 @node.route('/get_nodes', methods=['GET'])
 def get_nodes():
-    # Initialise a database object reading information stored in the local directory
-    db = sync_local_db()
+    # Initialise a database object from the local directory
+    db = node_db()
+    db.sync_local_dir()
 
     # Convert database to JSON object to be sent over HTML
     json_data = json.dumps(db.db_to_dict())
@@ -65,32 +95,36 @@ def get_nodes():
 # Function to receive the address of a new node and append to the database
 @node.route('/new_node', methods=['POST'])
 def new_node():
-    ip_addr = str(request.remote_addr)
+    # Capture IP address from the HTML request, JSON data
+    ip_addr = request.remote_addr
+    data = request.get_json()
 
-    print(ip_addr)
+    # Initialise a database object from the local directory
+    db = node_db()
+    db.sync_local_dir()
 
-    data = str(request.get_json())
+    # Exception handling if a node tries to send incorrect node information
+    if ip_addr == data[0]:
+        print('HTML request IP address does not match received data')
 
-    print(data)
+    # Add new node address to the database and save to the local directory
+    db.active_nodes[data[0]] = data[1]
+    db.self_save()
 
     return jsonify(received=True)
 
 
 if __name__ == '__main__':
-
-    # node_database = sync_local_db()
-
     # Logic to initialise database depending on the local directory
     # ENTER LOGIC HERE!
 
-    # # Initialise the database for storing addresses of active nodes on the network
-    # node_database = node_db()
-    # node_database.active_nodes = {"146.169.252.144:5000": "2023-01-16--17:19:17",
-    #                               "146.169.170.245:5000": "2023-01-16--17:20:21"}
-    # node_database.inactive_nodes = {"192.168.0.1:5000": "2023-01-09--22:41:30"}
-    # node_database.self_save()
+    # # Initialise the database for storing addresses of active nodes on the network and update local directory
+    node_database = node_db()
+    node_database.self_save()
 
-    # print(node_database.master_nodes, node_database.active_nodes, node_database.inactive_nodes)
+    # Add a database cleaning job and start the BackgroundScheduler
+    sched.add_job(node_database.clean, 'interval', seconds=1)
+    sched.start()
 
     # Start the FLASK server
     node.run(host='0.0.0.0', port=5050)
