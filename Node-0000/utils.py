@@ -1,5 +1,8 @@
-import datetime
+from datetime import datetime
 import block
+import socket
+import requests
+import database
 
 # Import from custom scripts
 from config import *
@@ -32,7 +35,7 @@ def create_new_block(prev_block=None, data=None, timestamp=None):
             data = data_file.read()
 
     if not timestamp:
-        timestamp = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S%f')
+        timestamp = datetime.utcnow().strftime('%Y%m%d%H%M%S%f')
 
     nonce = 0
     block_info_dict = dict_from_block_attributes(index=index, timestamp=timestamp, prev_hash=prev_hash, hash=None, data=data, nonce=nonce)
@@ -57,3 +60,29 @@ def find_valid_nonce(find_block, data=None):
         find_block.update_self_hash()
     assert find_block.is_valid()
     return find_block
+
+
+def update_status(port):
+    # Gather LAN IP address of the host computer
+    hostname = socket.gethostname()
+    ip_address = socket.gethostbyname(hostname)
+    time_stamp = datetime.utcnow().strftime('%Y%m%d%H%M')
+
+    # Initialise a database object from the local directory
+    db = database.node_db()
+    db.sync_local_dir()
+
+    # Send a post request to the node server
+    try:
+        requests.post(server_addr + '/new_node', json=(str(ip_address) + ':' + str(port), time_stamp))
+
+    except requests.exceptions.RequestException as e:
+        print(e)
+
+    # Send a post request to the active nodes
+    for addr in db.active_nodes:
+        try:
+            requests.post('http://' + addr + '/new_node', json=(str(ip_address) + ':' + str(port), time_stamp))
+
+        except requests.exceptions.RequestException as e:
+            print(e)

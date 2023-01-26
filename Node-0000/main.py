@@ -8,6 +8,8 @@ import sync
 import mine
 import init
 import database
+import utils
+from config import *
 
 
 # Create Flask server, BackgroundScheduler and Database object
@@ -90,8 +92,9 @@ if __name__ == '__main__':
     # Add a listener to detect when mine job has been executed
     # sched.add_listener(mine.mine_for_block_listener, apscheduler.events.EVENT_JOB_EXECUTED)
 
-    # Add a database cleaning job and start the BackgroundScheduler
+    # Add the database cleaning and status update job to the BackgroundScheduler
     sched.add_job(db.clean, 'interval', minutes=5)
+    sched.add_job(utils.update_status, 'interval', kwargs={'port': port}, minutes=1)
 
     # Start the BackgroundScheduler
     sched.start()

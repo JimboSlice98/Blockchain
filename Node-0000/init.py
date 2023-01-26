@@ -5,7 +5,6 @@ import os
 import sys
 import glob
 import socket
-from datetime import datetime
 
 # Import from custom scripts
 import sync
@@ -84,16 +83,8 @@ def init():
         else:
             port = int(input('ERROR: port not available, enter valid port: '))
 
-    # Gather LAN IP address of the host computer
-    hostname = socket.gethostname()
-    ip_address = socket.gethostbyname(hostname)
-    time_stamp = datetime.utcnow().strftime('%Y%m%d%H%M%S%f')
-
-    # Send a post request to the node server
-    requests.post(server_addr + '/new_node', json=(str(ip_address) + ':' + str(port), time_stamp))
-
-    for addr in db.active_nodes:
-        requests.post('http://' + addr + '/new_node', json=(str(ip_address) + ':' + str(port), time_stamp))
+    # Send post request to server and active nodes on the network
+    utils.update_status(port)
 
     print('Node started on port: %s' % port)
 

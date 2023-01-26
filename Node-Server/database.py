@@ -34,6 +34,7 @@ class node_db(object):
                     data = json.load(data_file)
 
                 except:
+                    # Note this error may occur when the local directory is being written to at the same time (OneDrive)
                     print(filepath)
 
         self.active_nodes = data['active_nodes']

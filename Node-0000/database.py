@@ -48,7 +48,7 @@ class node_db(object):
 
         # Iterate through the active node addresses and remove inactive nodes (>10 mins)
         for key in self.active_nodes:
-            if time_stamp - int(self.active_nodes[key]) > 10:
+            if time_stamp - int(self.active_nodes[key]) > 5:
                 # Add inactive node to the inactive list
                 self.inactive_nodes[key] = self.active_nodes[key]
                 move_addr.append(key)
