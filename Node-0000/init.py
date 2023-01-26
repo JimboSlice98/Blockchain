@@ -12,6 +12,7 @@ import sync
 import database
 import genesis
 import utils
+import config
 from config import *
 
 
@@ -22,6 +23,7 @@ logging.getLogger('urllib3').propagate = False
 def init():
     # Create database object to store addresses from the node server
     db = database.node_db()
+    server_addr = config.server_addr
 
     # Exception handling for not reaching the server
     con_err = 1
@@ -36,7 +38,7 @@ def init():
         # Connection unsuccessful so ask user for new address
         except requests.exceptions.ConnectionError:
             print('ERROR: Server not reachable')
-            server_addr = input('Enter server address: ')
+            # server_addr = input('Enter server address: ')
             print('Connecting to server...')
             con_err = 1
 
