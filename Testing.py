@@ -1,22 +1,10 @@
-import httplib, sys
+import requests
+import socket
+from datetime import datetime
 
 
-def doWork():
-    while True:
-        url = q.get()
-        status, url = getStatus(url)
-        doSomethingWithResult(status, url)
-        q.task_done()
+hostname = socket.gethostname()
+ip_address = socket.gethostbyname(hostname)
+time_stamp = datetime.utcnow().strftime('%Y%m%d%H%M%S%f')
 
-def getStatus(ourl):
-    try:
-        url = urlparse(ourl)
-        conn = httplib.HTTPConnection(url.netloc)   
-        conn.request("HEAD", url.path)
-        res = conn.getresponse()
-        return res.status, ourl
-    except:
-        return "error", ourl
-
-def doSomethingWithResult(status, url):
-    print status, url
+requests.post('http://localhost:5050/new_node', json=('127.0.0.1:' + str(5002), time_stamp))

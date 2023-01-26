@@ -1,23 +1,22 @@
 import requests
-import tqdm
 
 
-print('Scanning network for peer nodes:')
-available_ports = []
-occupied_ports = []
-for port in range(5000, 5004):  # SOMEHOW MAKE THIS INCLUSIVE SO YOU KNOW WHAT PORTS
-    # Check through the list of defined ports to see if any nodes are running
-    peer_blockchain_url = 'http://localhost:' + str(port)
-    print('Starting HTTP pool')
+print('Gathering node addresses from server...')
+
+server_addr = 'http://146.169.255.151:5050'
+
+con_err = 1
+while con_err == 1:
     try:
-        print('Scanning port: %s' % port)
-        r = requests.get(peer_blockchain_url)
+        r = requests.get(server_addr + '/get_nodes').json()
+        print(r)
+        # db.active_nodes = r['active_nodes']
+        # db.inactive_nodes = r['inactive_nodes']
+        con_err = 0
 
     except requests.exceptions.ConnectionError:
-        available_ports.append(port)
+        print('ERROR: Server not reachable')
+        server_addr = input('Enter server address: ')
+        print('Connecting to server...')
+        con_err = 1
 
-    else:
-        occupied_ports.append(port)
-
-print('Node(s) running at: %s' % occupied_ports)
-print('Available ports at: %s' % available_ports)

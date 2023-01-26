@@ -1,18 +1,19 @@
 import json
-import apscheduler
 from flask import Flask, jsonify, request
 from apscheduler.schedulers.background import BackgroundScheduler
 
 # Import from custom scripts
 from block import Block
-from config import *
 import sync
 import mine
 import init
+import database
 
 
+# Create Flask server, BackgroundScheduler and Database object
 node = Flask(__name__)
 sched = BackgroundScheduler(standalone=True)
+db = database.node_db()
 
 
 # Function to return the blockchain stored on a given node when queried
@@ -43,18 +44,54 @@ def mined():
     return jsonify(received=True)
 
 
-if __name__ == '__main__':
+# Function to return a dictionary containing the addresses of active nodes on the network
+@node.route('/get_nodes', methods=['GET'])
+def get_nodes():
+    # Initialise a database object from the local directory
+    db = database.node_db()
+    db.sync_local_dir()
 
+    # Convert database to JSON object to be sent over HTML
+    json_data = json.dumps(db.db_to_dict())
+
+    return json_data
+
+
+# Function to receive the address of a new node and append to the database
+@node.route('/new_node', methods=['POST'])
+def new_node():
+    # Capture IP address from the HTML request, JSON data
+    ip_addr = request.remote_addr
+    data = request.get_json()
+
+    # Initialise a database object from the local directory
+    db = database.node_db()
+    db.sync_local_dir()
+
+    # Add new node address to the database and save to the local directory
+    if ip_addr == data[0].split(':')[0]:
+        db.active_nodes[data[0]] = data[1]
+        db.self_save()
+
+    # Exception handling if a node tries to send incorrect node information
+    else:
+        print('ERROR: IP addresses do not match')
+        print('Request IP address: %s\nData IP address:    %s' % (ip_addr, data[0].split(':')[0]))
+
+    return jsonify(received=True)
+
+
+if __name__ == '__main__':
     # Initialisation sequence of node
     port = init.init()
 
-    # Create BackgroundScheduler object to override BlockingScheduler object in mine.py
-    mine.sched = sched
-
     # Add a mining job to the BackgroundScheduler
-    sched.add_job(mine.mine_for_block, kwargs={'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining')
+    # sched.add_job(mine.mine_for_block, kwargs={'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining')
     # Add a listener to detect when mine job has been executed
-    sched.add_listener(mine.mine_for_block_listener, apscheduler.events.EVENT_JOB_EXECUTED)
+    # sched.add_listener(mine.mine_for_block_listener, apscheduler.events.EVENT_JOB_EXECUTED)
+
+    # Add a database cleaning job and start the BackgroundScheduler
+    sched.add_job(db.clean, 'interval', minutes=5)
 
     # Start the BackgroundScheduler
     sched.start()

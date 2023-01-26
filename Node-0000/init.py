@@ -2,12 +2,14 @@ import requests
 from tqdm import tqdm
 import logging
 import os
-import json
+import sys
 import glob
 import socket
+from datetime import datetime
 
 # Import from custom scripts
 import sync
+import database
 import genesis
 import utils
 from config import *
@@ -18,36 +20,78 @@ logging.getLogger('urllib3').propagate = False
 
 
 def init():
-    print('Scanning network for peer nodes:')
+    # Create database object to store addresses from the node server
+    db = database.node_db()
+
+    # Exception handling for not reaching the server
+    con_err = 1
+    while con_err == 1:
+        # Try to connect to the predefined server address
+        try:
+            r = requests.get(server_addr + '/get_nodes').json()
+            db.active_nodes = r['active_nodes']
+            db.inactive_nodes = r['inactive_nodes']
+            con_err = 0
+
+        # Connection unsuccessful so ask user for new address
+        except requests.exceptions.ConnectionError:
+            print('ERROR: Server not reachable')
+            server_addr = input('Enter server address: ')
+            print('Connecting to server...')
+            con_err = 1
+
+    db.self_save()
+    print('Data downloaded')
+    print('Finding available ports...')
+
+    target = socket.gethostbyname(socket.gethostname())
     available_ports = []
     occupied_ports = []
 
-    # Use websockets to check if any nodes are running on the network
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(2)
-    for port in range(5000, 5004):  # SOMEHOW MAKE THIS INCLUSIVE SO YOU KNOW WHAT PORTS
-        # Scan through listed in config.py
-        try:
-            sock.connect(('127.0.0.1', port))
+    try:
+        # Scan all ports from 5000->5050
+        for port in tqdm(range(5000, 5004)):
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            socket.setdefaulttimeout(1)
 
-        except:
-            available_ports.append(port)
+            # Append occupied port to list
+            if s.connect_ex((target, port)) == 0:
+                occupied_ports.append(port)
 
-        else:
-            sock.close()
-            occupied_ports.append(port)
+            else:
+                available_ports.append(port)
 
-    print('Node(s) running at: %s' % occupied_ports)
-    print('Available ports at: %s' % available_ports)
+            s.close()
+
+    except socket.gaierror:
+        print('\n ERROR: Hostname could not be resolved')
+        sys.exit()
+
+    except socket.error:
+        print('\n ERROR: Server not responding')
+        sys.exit()
+
+    print('Occupied port(s): %s' % occupied_ports)
 
     # Allow user to select port to run the node
-    port = int(input('Enter port to run node: '))
+    port = int(input('Enter port [5000-5003] to start node: '))
     while True:
         if port in available_ports:
             break
 
         else:
             port = int(input('ERROR: port not available, enter valid port: '))
+
+    # Gather LAN IP address of the host computer
+    hostname = socket.gethostname()
+    ip_address = socket.gethostbyname(hostname)
+    time_stamp = datetime.utcnow().strftime('%Y%m%d%H%M%S%f')
+
+    # Send a post request to the node server
+    requests.post(server_addr + '/new_node', json=(str(ip_address) + ':' + str(port), time_stamp))
+
+    for addr in db.active_nodes:
+        requests.post('http://' + addr + '/new_node', json=(str(ip_address) + ':' + str(port), time_stamp))
 
     print('Node started on port: %s' % port)
 

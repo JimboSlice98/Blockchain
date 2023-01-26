@@ -8,14 +8,6 @@ import utils
 import sync
 
 
-# import logging
-# import sys
-# logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-
-
-sched = None
-
-
 # Function 1
 def mine_for_block(chain=None, rounds=STANDARD_ROUNDS, start_nonce=0, timestamp=None):
     # If no chain object is passed as an argument, gather last block from local directory
