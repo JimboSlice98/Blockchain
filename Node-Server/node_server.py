@@ -31,15 +31,20 @@ def new_node():
     db = database.node_db()
     db.sync_local_dir()
 
-    # Add new node address to the database and save to the local directory
-    if ip_addr == data[0].split(':')[0]:
-        db.active_nodes[data[0]] = data[1]
-        db.self_save()
-
-    # Exception handling if a node tries to send incorrect node information
-    else:
+    # Exception handling if a node tries to send incorrect address data
+    if ip_addr != data[0].split(':')[0]:
         print('ERROR: IP addresses do not match')
         print('Request IP address: %s\nData IP address:    %s' % (ip_addr, data[0].split(':')[0]))
+
+        return jsonify(received=True)
+
+    # Delete active node from the inactive list
+    if data[0] in db.inactive_nodes:
+        del db.inactive_nodes[data[0]]
+
+    # Add new node address to the database and save to the local directory
+    db.active_nodes[data[0]] = data[1]
+    db.self_save()
 
     return jsonify(received=True)
 

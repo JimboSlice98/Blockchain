@@ -1,5 +1,6 @@
 import json
 from flask import Flask, jsonify, request
+import apscheduler
 from apscheduler.schedulers.background import BackgroundScheduler
 
 # Import from custom scripts
@@ -15,6 +16,7 @@ from config import *
 # Create Flask server, BackgroundScheduler and Database object
 node = Flask(__name__)
 sched = BackgroundScheduler(standalone=True)
+mine.sched = sched
 db = database.node_db()
 
 
@@ -22,7 +24,7 @@ db = database.node_db()
 @node.route('/blockchain.json', methods=['GET'])
 def blockchain():
     # Ensure the chain object on a given node is synced with local directory
-    local_chain = sync.sync_local()
+    local_chain = sync.sync_local_dir()
 
     # Convert blocks to dictionaries then send as JSON objects
     json_blocks = json.dumps(local_chain.block_list_dict())
@@ -70,15 +72,20 @@ def new_node():
     db = database.node_db()
     db.sync_local_dir()
 
-    # Add new node address to the database and save to the local directory
-    if ip_addr == data[0].split(':')[0]:
-        db.active_nodes[data[0]] = data[1]
-        db.self_save()
-
-    # Exception handling if a node tries to send incorrect node information
-    else:
+    # Exception handling if a node tries to send incorrect address data
+    if ip_addr != data[0].split(':')[0]:
         print('ERROR: IP addresses do not match')
         print('Request IP address: %s\nData IP address:    %s' % (ip_addr, data[0].split(':')[0]))
+
+        return jsonify(received=True)
+
+    # Delete active node from the inactive list
+    if data[0] in db.inactive_nodes:
+        del db.inactive_nodes[data[0]]
+
+    # Add new node address to the database and save to the local directory
+    db.active_nodes[data[0]] = data[1]
+    db.self_save()
 
     return jsonify(received=True)
 
@@ -88,9 +95,9 @@ if __name__ == '__main__':
     port = init.init()
 
     # Add a mining job to the BackgroundScheduler
-    # sched.add_job(mine.mine_for_block, kwargs={'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining')
+    sched.add_job(mine.mine_for_block, kwargs={'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining')
     # Add a listener to detect when mine job has been executed
-    # sched.add_listener(mine.mine_for_block_listener, apscheduler.events.EVENT_JOB_EXECUTED)
+    sched.add_listener(mine.mine_for_block_listener, apscheduler.events.EVENT_JOB_EXECUTED)
 
     # Add the database cleaning and status update job to the BackgroundScheduler
     sched.add_job(db.clean, 'interval', minutes=5)

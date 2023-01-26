@@ -24,6 +24,7 @@ def init():
     db = database.node_db()
     server_addr = config.server_addr
 
+    print('Connecting to server to get node addresses...')
     # Exception handling for not reaching the server
     con_err = 1
     while con_err == 1:
@@ -35,7 +36,7 @@ def init():
             con_err = 0
 
         # Connection unsuccessful so ask user for new address
-        except requests.exceptions.ConnectionError:
+        except requests.exceptions.RequestException:
             print('ERROR: Server not reachable')
             # server_addr = input('Enter server address: ')
             print('Connecting to server...')
@@ -88,12 +89,18 @@ def init():
 
     print('Node started on port: %s' % port)
 
+    ip_address = socket.gethostbyname(socket.gethostname())
+
+    # Delete the node's own address from the database
+    if (ip_address + ':' + str(port)) in db.active_nodes:
+        del db.active_nodes[ip_address + ':' + str(port)]
+
     # ------------------------------------
     # BIG LOGIC FOR STARTING NODE
     # ------------------------------------
 
     # Condition for no running nodes on network
-    if len(occupied_ports) == 0:
+    if len(db.active_nodes) == 0:
         print('No nodes running on network')
         # Check if there are JSON files in local directory
         if glob.glob(os.path.join(CHAINDATA_DIR, '*.json')):
@@ -102,7 +109,7 @@ def init():
                 answer = input('Previous blockchain data detected, attempt to reload? (Y/N): ')
                 if answer.upper() == 'Y':
                     print('Loading previous blockchain data...')
-                    local_chain = sync.sync_local()
+                    local_chain = sync.sync_local_dir()
                     if local_chain.is_valid():
                         print('Previous blockchain data loaded successfully')
                         break

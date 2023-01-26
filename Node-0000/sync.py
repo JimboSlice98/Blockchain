@@ -7,10 +7,11 @@ import glob
 from chain import Chain
 from config import *
 from block import Block
+import database
 
 
 # Function to create chain object from local directory
-def sync_local():
+def sync_local_dir():
     blocks = []
     # Assumes that the local directory has data stored
     if os.path.exists(CHAINDATA_DIR):
@@ -38,19 +39,23 @@ def sync_local():
 
 # Function to sync local directory with other nodes - CONSENSUS ALGORITHM IS HERE
 def sync_overall(save=False):
-    best_chain = sync_local()  # THIS NEEDS TO BE CHANGED ACCORDING TO CONSENSUS ALGORITHM
-    for peer in PEERS:
-        # Scan through the list of defined ports
-        peer_blockchain_url = peer + 'blockchain.json'
-        try:
-            # Test to see is a node is running on a given port
-            r = requests.get(peer_blockchain_url)
+    best_chain = sync_local_dir()  # THIS NEEDS TO BE CHANGED ACCORDING TO CONSENSUS ALGORITHM
 
-        except requests.exceptions.ConnectionError:
-            print("Peer at %s not running. Continuing to next peer." % peer)
+    # Initialise a database object from the local directory
+    db = database.node_db()
+    db.sync_local_dir()
+
+    # Query only active nodes for blockchain data
+    for addr in db.active_nodes:
+        try:
+            r = requests.get('http://' + addr + '/blockchain.json')
+
+        except requests.exceptions.RequestException as error:
+            print(error)
+            print('Peer at %s not running. Continuing to next peer.' % addr)
 
         else:
-            print("Peer at %s is running. Gathered their blockchain for analysis." % peer)
+            print("Peer at %s is running, gathered blockchain data for analysis" % addr)
             # Store the given peer node's JSON object as a chain object
             peer_blockchain_dict = r.json()
             # Convert the JSON objects to a list of block objects

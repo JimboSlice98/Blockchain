@@ -26,7 +26,7 @@ sched = BackgroundScheduler(standalone=True)
 @node.route('/blockchain.json', methods=['GET'])
 def blockchain():
     # Ensure the chain object on a given node is synced with local directory
-    local_chain = sync.sync_local()
+    local_chain = sync.sync_local_dir()
 
     # Convert blocks to dictionaries then send as JSON objects
     json_blocks = json.dumps(local_chain.block_list_dict())

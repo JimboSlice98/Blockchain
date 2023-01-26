@@ -6,13 +6,17 @@ from block import Block
 from config import *
 import utils
 import sync
+import database
+
+
+sched = None
 
 
 # Function 1
 def mine_for_block(chain=None, rounds=STANDARD_ROUNDS, start_nonce=0, timestamp=None):
     # If no chain object is passed as an argument, gather last block from local directory
     if not chain:
-        chain = sync.sync_local()
+        chain = sync.sync_local_dir()
 
     # Gather last block from chain object argument
     prev_block = chain.most_recent_block()
@@ -29,7 +33,7 @@ def mine_from_prev_block(prev_block, rounds=STANDARD_ROUNDS, start_nonce=0, time
 # Function 3
 def mine_block(new_block, rounds=STANDARD_ROUNDS, start_nonce=0):
     # Mine a given block with nonce values in the range dictated by 'start_nonce' and 'rounds'
-    print('MINING FOR BLOCK %s. START NONCE: %s, ROUNDS: %s' % (new_block.index, start_nonce, rounds))
+    # print('MINING FOR BLOCK %s. START NONCE: %s, ROUNDS: %s' % (new_block.index, start_nonce, rounds))
     nonce_range = [i+start_nonce for i in range(rounds)]
     for nonce in nonce_range:
         new_block.nonce = nonce
@@ -65,23 +69,26 @@ def mine_for_block_listener(event):
 
         # No new block has been mined so restart the mining job with increased 'start_nonce'
         else:
-            print('\n\nROUNDS FINISHED, THEREFORE RESTARTING MINING')
+            # print('\n\nROUNDS FINISHED, THEREFORE RESTARTING MINING')
             sched.add_job(mine_for_block, kwargs={'rounds': rounds, 'start_nonce': start_nonce+rounds, 'timestamp': timestamp}, id='mining')
 
 
 # Function to broadcast a given mined block to the network
 def broadcast_mined_block(new_block):
-
     block_info_dict = new_block.to_dict()
-    for peer in PEERS:
-        # NEED TO REMOVE CURRENT NODE FROM THE LIST TO BROADCAST
 
+    # Initialise a database object from the local directory
+    db = database.node_db()
+    db.sync_local_dir()
+
+    # Broadcast JSON object via post request to active nodes only
+    for addr in db.active_nodes:
         try:
-            r = requests.post(peer+'mined', json=block_info_dict)
+            requests.post('http://' + addr + '/mined', json=block_info_dict)
 
-        except requests.exceptions.ConnectionError:
-            print("Peer %s not connected" % peer)
-            continue
+        except requests.exceptions.RequestException as error:
+            print(error)
+            print('Peer at %s not running. Continuing to next peer.' % addr)
 
     return True
 
@@ -89,7 +96,7 @@ def broadcast_mined_block(new_block):
 # Function to determine if the received block is valid
 def validate_possible_block(possible_block):
     # Gather the most current local block to validate possible new block
-    chain = sync.sync_local()
+    chain = sync.sync_local_dir()
     cur_block = chain.most_recent_block()
 
     # Check point 1) Are the indexes in order

@@ -76,13 +76,13 @@ def update_status(port):
     try:
         requests.post(server_addr + '/new_node', json=(str(ip_address) + ':' + str(port), time_stamp))
 
-    except requests.exceptions.RequestException as e:
-        print(e)
+    except requests.exceptions.RequestException as error:
+        print(error)
 
     # Send a post request to the active nodes
     for addr in db.active_nodes:
         try:
             requests.post('http://' + addr + '/new_node', json=(str(ip_address) + ':' + str(port), time_stamp))
 
-        except requests.exceptions.RequestException as e:
-            print(e)
+        except requests.exceptions.RequestException as error:
+            print(error)
