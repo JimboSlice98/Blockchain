@@ -3,6 +3,9 @@ import block
 import socket
 import requests
 import database
+import os
+import utils
+import shutil
 
 # Import from custom scripts
 from config import *
@@ -86,3 +89,13 @@ def update_status(port):
 
         except requests.exceptions.RequestException as error:
             print(error)
+
+
+def sanitise_local_dir(port):
+    if os.path.exists(CHAINDATA_DIR):
+        shutil.rmtree(CHAINDATA_DIR)
+
+    os.mkdir(CHAINDATA_DIR)
+
+    # Save .txt file with info about what port a given node in running on
+    utils.node_txt(port)

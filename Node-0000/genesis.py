@@ -1,6 +1,5 @@
 import os
 import utils
-import glob
 import shutil
 
 # Import from custom scripts
@@ -9,10 +8,7 @@ from config import *
 
 def genesis(port):
     # Sanitise local directory
-    if os.path.exists(CHAINDATA_DIR):
-        shutil.rmtree(CHAINDATA_DIR)
-
-    os.mkdir(CHAINDATA_DIR)
+    utils.sanitise_local_dir(port)
 
     # Save .txt file with info about what port a given node in running on
     utils.node_txt(port)

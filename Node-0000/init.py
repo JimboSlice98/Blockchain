@@ -141,27 +141,33 @@ def init():
 
     # Condition for running nodes on network
     else:
-        # Check if there are JSON files in local directory
-        if glob.glob(os.path.join(CHAINDATA_DIR, '*.json')):
-            # CONSENSUS ALGORITHM NEEDED
-            print('Warning: Consensus algorithm needed here, not yet implemented')
-            print('Creating genesis block...')
-            # Create the first block from scratch
-            genesis.genesis(port)
-            print('Genesis block created')
+        print('%d nodes running on network' % len(db.active_nodes))
+        utils.sanitise_local_dir(port)
+        print('Downloading latest blockchain data...')
+        sync.sync(save=True)
+        print('Download complete')
 
-        # No JSON files in local directory
-        else:
-            print('Downloading latest blockchain data...')
-            sync.sync(save=True)
-            print('Download complete')
-
-            # Save .txt file with info about what port a given node in running on
-            utils.node_txt(port)
-
-            # print('Creating genesis block...')
-            # # Create the first block from scratch
-            # genesis.genesis(port)
-            # print('Genesis block created')
+        # # Check if there are JSON files in local directory
+        # if glob.glob(os.path.join(CHAINDATA_DIR, '*.json')):
+        #     # CONSENSUS ALGORITHM NEEDED
+        #     print('Warning: Consensus algorithm needed here, not yet implemented')
+        #     print('Creating genesis block...')
+        #     # Create the first block from scratch
+        #     genesis.genesis(port)
+        #     print('Genesis block created')
+        #
+        # # No JSON files in local directory
+        # else:
+        #     print('Downloading latest blockchain data...')
+        #     sync.sync(save=True)
+        #     print('Download complete')
+        #
+        #     # Save .txt file with info about what port a given node in running on
+        #     utils.node_txt(port)
+        #
+        #     # print('Creating genesis block...')
+        #     # # Create the first block from scratch
+        #     # genesis.genesis(port)
+        #     # print('Genesis block created')
 
     return port
