@@ -63,6 +63,13 @@ class Block(object):
 
     # Method to determine if the proof of work meets the conditions stored in config.py
     def is_valid(self):
+        sha = hashlib.sha256()
+        sha.update(self.header_string().encode('utf-8'))
+        verify_hash = sha.hexdigest()
+
+        if not self.hash == verify_hash:
+            return False
+
         self.update_self_hash()
         # Ensure there are the required number of leading zeros in the hash value
         if str(self.hash[0:NUM_ZEROS]) == '0' * NUM_ZEROS:

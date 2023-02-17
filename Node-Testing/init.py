@@ -135,7 +135,7 @@ def init():
                         print('Unable to load previous blockchain data as the files are corrupted')
                         print('Creating genesis block...')
                         # Create the first block from scratch
-                        # genesis(port)
+                        genesis(port)
                         print('Genesis block created')
                         break
 

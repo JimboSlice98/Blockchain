@@ -40,4 +40,3 @@ def sync_local_dir():
 if __name__ == '__main__':
     local_chain = sync_local_dir()
     print(local_chain.is_valid())
-

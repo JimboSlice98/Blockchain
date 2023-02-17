@@ -111,9 +111,9 @@ def validate_network_block(network_block):
     # Remove all mining jobs as they will contain higher nonce ranges
     try:
         sched.remove_job('mining')
-        print("removed running mine job in validating possible block")
-    except apscheduler.jobstores.base.JobLookupError:
-        print("mining job didn't exist when validating possible block")
+        print("Removed mining job as block is depreciated")
+    except apscheduler.jobstores.base.JobLookupError as error:
+        print(error)
 
     # Start mining for the next block after the received block
     next_block = utils.create_new_block(prev_block=network_block)

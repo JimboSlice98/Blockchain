@@ -62,7 +62,6 @@ def sync_overall(save=False):
             peer_blocks = [Block(bdict) for bdict in peer_blockchain_dict]
             # Convert the list of block objects to a chain object to check its validity
             peer_chain = Chain(peer_blocks)
-            assert peer_chain.is_valid()
 
             # THIS IS THE CONSENSUS ALGORITHM - NEEDS WORK
             if peer_chain.is_valid() and len(peer_chain) > len(best_chain):
