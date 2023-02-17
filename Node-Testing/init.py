@@ -9,7 +9,6 @@ import socket
 # Import from custom scripts
 import sync
 import database
-import genesis
 import utils
 import config
 from config import *
@@ -19,10 +18,29 @@ from config import *
 logging.getLogger('urllib3').propagate = False
 
 
+def genesis(port):
+    # Sanitise local directory
+    utils.sanitise_local_dir(port)
+
+    # Save .txt file with info about what port a given node in running on
+    utils.node_txt(port)
+
+    # Create first block object and save to local directory
+    first_block = utils.create_new_block()  # CLARIFY THIS IN THE FUTURE
+    first_block.update_self_hash()
+    while str(first_block.hash[0:NUM_ZEROS]) != '0' * NUM_ZEROS:
+        first_block.nonce += 1
+        first_block.update_self_hash()
+
+    assert first_block.is_valid()
+    first_block.self_save()
+
+
 def init():
     # Create database object to store addresses from the node server
     db = database.node_db()
     server_addr = config.server_addr
+    node_addr = socket.gethostbyname(socket.gethostname())
 
     print('Connecting to server to get node addresses...')
     # Exception handling for not reaching the server
@@ -46,7 +64,7 @@ def init():
     print('Data downloaded')
     print('Finding available ports...')
 
-    target = socket.gethostbyname(socket.gethostname())
+    # Scan for occupied ports on a given node
     available_ports = []
     occupied_ports = []
 
@@ -57,7 +75,7 @@ def init():
             socket.setdefaulttimeout(1)
 
             # Append occupied port to list
-            if s.connect_ex((target, port)) == 0:
+            if s.connect_ex((node_addr, port)) == 0:
                 occupied_ports.append(port)
 
             else:
@@ -84,16 +102,15 @@ def init():
         else:
             port = int(input('ERROR: port not available, enter valid port: '))
 
-    # Send post request to server and active nodes on the network
-    utils.update_status(port)
-
     print('Node started on port: %s' % port)
 
-    ip_address = socket.gethostbyname(socket.gethostname())
-
     # Delete the node's own address from the database
-    if (ip_address + ':' + str(port)) in db.active_nodes:
-        del db.active_nodes[ip_address + ':' + str(port)]
+    if (node_addr + ':' + str(port)) in db.active_nodes:
+        del db.active_nodes[node_addr + ':' + str(port)]
+        db.self_save()
+
+    # Send post request to server and active nodes on the network
+    utils.update_status(port)
 
     # ------------------------------------
     # BIG LOGIC FOR STARTING NODE
@@ -118,14 +135,14 @@ def init():
                         print('Unable to load previous blockchain data as the files are corrupted')
                         print('Creating genesis block...')
                         # Create the first block from scratch
-                        genesis.genesis(port)
+                        # genesis(port)
                         print('Genesis block created')
                         break
 
                 elif answer.upper() == 'N':
                     print('Creating genesis block...')
                     # Create the first block from scratch
-                    genesis.genesis(port)
+                    genesis(port)
                     print('Genesis block created')
                     break
 
@@ -136,7 +153,7 @@ def init():
         else:
             print('Creating genesis block...')
             # Create the first block from scratch
-            genesis.genesis(port)
+            genesis(port)
             print('Genesis block created')
 
     # Condition for running nodes on network
@@ -146,28 +163,5 @@ def init():
         print('Downloading latest blockchain data...')
         sync.sync(save=True)
         print('Download complete')
-
-        # # Check if there are JSON files in local directory
-        # if glob.glob(os.path.join(CHAINDATA_DIR, '*.json')):
-        #     # CONSENSUS ALGORITHM NEEDED
-        #     print('Warning: Consensus algorithm needed here, not yet implemented')
-        #     print('Creating genesis block...')
-        #     # Create the first block from scratch
-        #     genesis.genesis(port)
-        #     print('Genesis block created')
-        #
-        # # No JSON files in local directory
-        # else:
-        #     print('Downloading latest blockchain data...')
-        #     sync.sync(save=True)
-        #     print('Download complete')
-        #
-        #     # Save .txt file with info about what port a given node in running on
-        #     utils.node_txt(port)
-        #
-        #     # print('Creating genesis block...')
-        #     # # Create the first block from scratch
-        #     # genesis.genesis(port)
-        #     # print('Genesis block created')
 
     return port

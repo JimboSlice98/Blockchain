@@ -1,7 +1,9 @@
-import Testing_0
-import time
+import requests
 
 
-Testing.var_0 = 100
+try:
+    requests.post('http://146.169.250.232:5050/mined', json={"key":"value"})
 
-time.sleep(100)
+except requests.exceptions.RequestException as error:
+    print(error)
+    print('Peer at %s not running. Continuing to next peer.' % addr)

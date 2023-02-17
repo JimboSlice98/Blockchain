@@ -1,4 +1,5 @@
 import requests
+import jsonify
 import apscheduler
 
 # Import from custom scripts
@@ -101,18 +102,18 @@ def validate_possible_block(possible_block):
 
     # Check point 1) Are the indexes in order
     if possible_block.index - 1 != cur_block.index:
-        print('VPB: Index error')
-        return False
+        # print('VPB: Index error')
+        return jsonify(received=False), 409
 
     # Check point 2) Are the has values linked
     if possible_block.prev_hash != cur_block.hash:
         print('VPB: Hash error')
-        return False
+        return jsonify(received=False), 409
 
     # Check point 3) Is the hash of a block correct and does it meet the difficulty
     if not possible_block.is_valid():
         print('VPB: Block invalid')
-        return False
+        return jsonify(received=False), 409
 
     # Therefore the new block is valid so needs to be saved
     possible_block.self_save()

@@ -15,7 +15,7 @@ from config import *
 
 # Create Flask server, BackgroundScheduler and Database object
 node = Flask(__name__)
-sched = BackgroundScheduler(standalone=True)
+sched = BackgroundScheduler(standalone=True, job_defaults={'max_instances': 1})
 mine.sched = sched
 db = database.node_db()
 
@@ -29,21 +29,16 @@ def blockchain():
     # Convert blocks to dictionaries then send as JSON objects
     json_blocks = json.dumps(local_chain.block_list_dict())
 
-    print(local_chain.block_list_dict())
-    print(json_blocks)
-
     return json_blocks
 
 
 # Function to receive a given block as a dictionary from another node
 @node.route('/mined', methods=['POST'])
 def mined():
-    print('Block received from peer node: ')
-    possible_block_dict = request.get_json()
-    possible_block = Block(possible_block_dict)
-    print(possible_block_dict)
+    network_block = Block(request.get_json())
 
-    sched.add_job(mine.validate_possible_block, args=[possible_block], id='validate_possible_block')
+    if mine.validate_network_block(network_block) != True:
+        return jsonify(received=False), 409
 
     return jsonify(received=True)
 
@@ -94,10 +89,9 @@ if __name__ == '__main__':
     # Initialisation sequence of node
     port = init.init()
 
-    # Add a mining job to the BackgroundScheduler
-    # sched.add_job(mine.mine_for_block, kwargs={'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining')
-    # Add a listener to detect when mine job has been executed
-    sched.add_listener(mine.mine_for_block_listener, apscheduler.events.EVENT_JOB_EXECUTED)
+    # Add a mining job and listener to the BackgroundScheduler
+    sched.add_job(mine.mine, kwargs={'block': utils.create_new_block(), 'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining')
+    sched.add_listener(mine.mine_listener, apscheduler.events.EVENT_JOB_EXECUTED)
 
     # Add the database cleaning and status update job to the BackgroundScheduler
     sched.add_job(db.clean, 'interval', minutes=5)
