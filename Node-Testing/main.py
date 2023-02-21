@@ -90,7 +90,7 @@ if __name__ == '__main__':
     port = init.init()
 
     # Add a mining job and listener to the BackgroundScheduler
-    sched.add_job(mine.mine, kwargs={'block': utils.create_new_block(), 'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining')
+    # sched.add_job(mine.mine, kwargs={'block': utils.create_new_block(), 'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining')
     sched.add_listener(mine.mine_listener, apscheduler.events.EVENT_JOB_EXECUTED)
 
     # Add the database cleaning,status update and validity sync jobs to the BackgroundScheduler

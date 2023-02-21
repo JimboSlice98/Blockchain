@@ -47,6 +47,7 @@ class Block(object):
         filename = '%s%s.json' % (CHAINDATA_DIR, index_string)
         with open(filename, 'w') as block_file:
             json.dump(self.to_dict(), block_file)
+            block_file.close()
 
     # Method to return the string of a given block's attributes as a dictionary
     def to_dict(self):
