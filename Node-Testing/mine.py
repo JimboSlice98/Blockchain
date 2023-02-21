@@ -63,26 +63,40 @@ def broadcast_mined_block(new_block):
     db = database.node_db()
     db.sync_local_dir()
 
+    accepted = []
+    rejected = []
+    dead = []
+
     # Broadcast JSON object via post request to active nodes only
     for addr in db.active_nodes:
         try:
             r = requests.post('http://' + addr + '/mined', json=block_info_dict)
 
         except requests.exceptions.RequestException as error:
-            print(error)
-            print(r.status_code)
+            print(error, r.status_code)
             print('Peer at %s not running. Continuing to next peer.' % addr)
+            dead.append(addr)
+
+        # Handling for when a node accepts the block
+        if r.status_code == 200:
+            accepted.append(addr)
 
         # Handling for when a node refuses the broadcast block
         if r.status_code == 409:
             print('Peer at %s refused block: %s' % (addr, new_block.index))
-            sync.sync(save=True)
-            return
+            rejected.append(addr)
+
+    print('A:', len(accepted), ' R:', len(rejected), ' D:', len(dead))
 
     # Only save the block if it is accepted by the network
-    new_block.self_save()
+    if len(accepted) / (len(accepted) + len(rejected)) >= 0.51:
+        new_block.self_save()
+        return
 
-    return True
+    else:
+        sync.sync(save=True)
+
+    return
 
 
 # Function to determine if the received block is valid

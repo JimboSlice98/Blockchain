@@ -93,9 +93,10 @@ if __name__ == '__main__':
     sched.add_job(mine.mine, kwargs={'block': utils.create_new_block(), 'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining')
     sched.add_listener(mine.mine_listener, apscheduler.events.EVENT_JOB_EXECUTED)
 
-    # Add the database cleaning and status update job to the BackgroundScheduler
+    # Add the database cleaning,status update and validity sync jobs to the BackgroundScheduler
     sched.add_job(db.clean, 'interval', minutes=5)
     sched.add_job(utils.update_status, 'interval', kwargs={'port': port}, minutes=1)
+    sched.add_job(sync.validity_sync, 'interval', seconds=30)
 
     # Start the BackgroundScheduler
     sched.start()

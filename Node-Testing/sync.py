@@ -55,7 +55,7 @@ def sync_overall(save=False):
             print('Peer at %s not running. Continuing to next peer.' % addr)
 
         else:
-            print("Peer at %s is running, gathered blockchain data for analysis" % addr)
+            # print("Peer at %s is running, gathered blockchain data for analysis" % addr)
             # Store the given peer node's JSON object as a chain object
             peer_blockchain_dict = r.json()
             # Convert the JSON objects to a list of block objects
@@ -79,6 +79,15 @@ def sync_overall(save=False):
         best_chain.self_save()
 
     return best_chain
+
+
+def validity_sync():
+    local_chain = sync_local_dir()
+    if not local_chain.is_valid():
+        print('LOCAL CHAIN IS CORRUPT, SYNCING WITH NETWORK')
+        sync(save=True)
+
+    return
 
 
 def sync(save=False):

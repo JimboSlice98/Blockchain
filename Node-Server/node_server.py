@@ -55,7 +55,7 @@ if __name__ == '__main__':
     db.self_save()
 
     # Add a database cleaning job and start the BackgroundScheduler
-    sched.add_job(db.clean, 'interval', minutes=5)
+    sched.add_job(db.clean, 'interval', minutes=1)
     sched.start()
 
     # Start the FLASK server
