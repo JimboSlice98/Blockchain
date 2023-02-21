@@ -4,11 +4,11 @@ import socket
 import requests
 import database
 import os
+import utils
 import shutil
 
 # Import from custom scripts
 from config import *
-import sync
 
 
 def dict_from_block_attributes(**kwargs):
@@ -23,67 +23,46 @@ def dict_from_block_attributes(**kwargs):
     return info
 
 
-def create_new_block(prev_block=None, timestamp=None, origin=None, data=None):
+def create_new_block(prev_block=None, data=None, timestamp=None):
     if not prev_block:
-        # Check the local directory for JSON files
-        for fname in os.listdir(CHAINDATA_DIR):
-            if fname.endswith('.json'):
-                # Gather last block from local directory
-                prev_block = sync.sync_local_dir().latest_block()
-                index = int(prev_block.index) + 1
-                prev_hash = prev_block.hash
-                break
-
-            else:
-                # Assign genesis block attributes
-                index = 0
-                prev_hash = ''
-
-    # Assign block attributes according to supplied previous block
+        # index zero and arbitrary previous hash
+        index = 0
+        prev_hash = ''
     else:
         index = int(prev_block.index) + 1
         prev_hash = prev_block.hash
 
     if not data:
-        data = []
-
-    if not origin:
         filename = '%s/data.txt' % (CHAINDATA_DIR)
-        with open(filename, 'r') as origin_file:
-            origin = origin_file.read()
+        with open(filename, 'r') as data_file:
+            data = data_file.read()
 
     if not timestamp:
         timestamp = datetime.utcnow().strftime('%Y%m%d%H%M%S%f')
 
     nonce = 0
-    block_info_dict = dict_from_block_attributes(index=index, timestamp=timestamp, prev_hash=prev_hash,
-                                                 hash=None, origin=origin, nonce=nonce, data=data)
+    block_info_dict = dict_from_block_attributes(index=index, timestamp=timestamp, prev_hash=prev_hash, hash=None, data=data, nonce=nonce)
     new_block = block.Block(block_info_dict)
-
     return new_block
 
 
 def node_txt(port):
-    hostname = socket.gethostname()
-    ip_address = socket.gethostbyname(hostname)
-    addr = str(ip_address) + ':' + str(port)
-
     filename = '%s/data.txt' % (CHAINDATA_DIR)
     with open(filename, 'w') as data_file:
-        data_file.write(addr)
+        data_file.write('Block mined by node on port %s' % port)
 
 
-# # THIS IS ONLY USED AS A TESTING FUNCTION
-# def find_valid_nonce(find_block, data=None):
-#     find_block.nonce = 0
-#     find_block.update_self_hash()  # calculate_hash(index, prev_hash, data, timestamp, nonce)
-#     if not find_block.data:
-#         find_block.data = data
-#     while str(find_block.hash[0:NUM_ZEROS]) != '0' * NUM_ZEROS:
-#         find_block.nonce += 1
-#         find_block.update_self_hash()
-#     assert find_block.is_valid()
-#     return find_block
+# THIS IS ONLY USED AS A TESTING FUNCTION
+def find_valid_nonce(find_block, data=None):
+    find_block.nonce = 0
+    find_block.update_self_hash()  # calculate_hash(index, prev_hash, data, timestamp, nonce)
+    if not find_block.data:
+        find_block.data = data
+    while str(find_block.hash[0:NUM_ZEROS]) != '0' * NUM_ZEROS:
+        find_block.nonce += 1
+        find_block.update_self_hash()
+    assert find_block.is_valid()
+    return find_block
 
 
 def update_status(port):
@@ -119,4 +98,4 @@ def sanitise_local_dir(port):
     os.mkdir(CHAINDATA_DIR)
 
     # Save .txt file with info about what port a given node in running on
-    node_txt(port)
+    utils.node_txt(port)

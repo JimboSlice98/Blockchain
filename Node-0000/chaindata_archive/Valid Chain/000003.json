@@ -1,1 +1,1 @@
-{"index": "3", "timestamp": "20221128153130786999", "prev_hash": "0000060a5f117b6bd30af457822ced273ea62c4f3da25d7ddbaf5fc323c27a99", "hash": "00000e3222232ffdf097f64ba4f3a252207bf8cb20c02664f75cb2589c60ebf3", "data": "Block mined by node on port 5000", "nonce": "4794656"}
+{"index": "3", "timestamp": "20230216182053586843", "prev_hash": "00000e8efde61f2761e78cbb35262feeced78eac73dc05ebbfc1cc6bffdfb5ec", "hash": "0000064bdc2827c0805bea0d83142991c1ab8194d5faf7452fa21ce6fcfa34eb", "origin": "146.169.253.11:5000", "nonce": "700884", "data": "[]"}

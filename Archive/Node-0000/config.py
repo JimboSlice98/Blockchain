@@ -1,7 +1,7 @@
 CHAINDATA_DIR = 'chaindata/'
-NUM_ZEROS = 6
+NUM_ZEROS = 5
 
-server_addr = 'http://146.169.243.124:5050'
+server_addr = 'http://146.169.248.167:5050'
 
 PEERS = [
     'http://localhost:5000/',
@@ -11,7 +11,7 @@ PEERS = [
     'http://localhost:5004/'
     ]
 
-BLOCK_VAR_CONVERSIONS = {'index': int, 'timestamp': int, 'prev_hash': str, 'hash': str, 'origin': str, 'nonce': int}
+BLOCK_VAR_CONVERSIONS = {'index': int, 'nonce': int, 'hash': str, 'prev_hash': str, 'timestamp': int}
 
 STANDARD_ROUNDS = 100000
 

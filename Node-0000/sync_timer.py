@@ -22,7 +22,6 @@ def sync_local_dir():
                 try:
                     # Read local JSON block data stored in directory
                     block_info = json.load(block_file)
-                    block_file.close()
 
                 except:
                     print(filepath)
@@ -43,7 +42,9 @@ def sync_local_dir():
 async def get_blockchain(session, addr):
     try:
         async with session.get(addr) as response:
+            # start_time = time.time()
             if response.status == 200:
+
                 # Store the given peer node's JSON object as a chain object
                 peer_blockchain_dict = await response.json(content_type=None)
 
@@ -52,6 +53,7 @@ async def get_blockchain(session, addr):
                 # Convert the list of block objects to a chain object to check its validity
                 peer_chain = Chain(peer_blocks)
 
+                # print("--- Node time: %s seconds ---" % (time.time() - start_time))
                 return peer_chain
 
             else:
@@ -70,11 +72,15 @@ async def sync_overall(save=False):
 
     async with aiohttp.ClientSession() as session:
         tasks = []
+        start_time = time.time()
         for addr in db.active_nodes:
             url = f'http://{addr}/blockchain.json'
             tasks.append(asyncio.ensure_future(get_blockchain(session, url)))
 
         data = await asyncio.gather(*tasks)
+        print("--- Data acquisition time: %s seconds ---" % (time.time() - start_time))
+
+        start_time = time.time()
         for peer_chain in data:
             # Exception handling for when no data is returned from a node address
             if peer_chain is None:
@@ -84,8 +90,9 @@ async def sync_overall(save=False):
             if peer_chain.is_valid() and len(peer_chain) > len(best_chain):
                 best_chain = peer_chain
 
-    print("Longest blockchain is %s blocks" % len(best_chain))
+        print("--- Data processing time: %s seconds ---" % (time.time() - start_time))
 
+    start_time = time.time()
     # Save and replace local directory according to 'save' argument
     if save:
         # Remove all JSON files in the local directory - NEEDS REFINEMENT
@@ -94,6 +101,9 @@ async def sync_overall(save=False):
 
         # Save the new chain in the local directory
         best_chain.self_save()
+
+    print("--- Data save time: %s seconds ---" % (time.time() - start_time))
+    print("--- Longest blockchain is %s blocks" % len(best_chain))
 
     return best_chain
 

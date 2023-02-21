@@ -1,7 +1,9 @@
 import hashlib
+import os
 import json
 
 # Import from custom scripts
+import utils
 from config import *
 
 
@@ -25,11 +27,11 @@ class Block(object):
 
     # Method to compile a given block's attributes into a single string
     def header_string(self):
-        return str(self.index) + str(self.timestamp) + self.prev_hash + self.origin + str(self.nonce) + str(self.data)
+        return str(self.index) + self.prev_hash + self.data + str(self.timestamp) + str(self.nonce)
 
     # Method to generate a given block's header data
-    def generate_header(index, timestamp, prev_hash, hash, origin, nonce, data):
-        return str(index) + str(timestamp) + prev_hash + str(origin) + str(nonce) + data
+    def generate_header(index, prev_hash, data, timestamp, nonce):
+        return str(index) + prev_hash + data + str(timestamp) + str(nonce)
 
     # Method to update the has attribute of a given block
     def update_self_hash(self):
@@ -47,7 +49,6 @@ class Block(object):
         filename = '%s%s.json' % (CHAINDATA_DIR, index_string)
         with open(filename, 'w') as block_file:
             json.dump(self.to_dict(), block_file)
-            block_file.close()
 
     # Method to return the string of a given block's attributes as a dictionary
     def to_dict(self):
@@ -56,21 +57,13 @@ class Block(object):
         info['timestamp'] = str(self.timestamp)
         info['prev_hash'] = str(self.prev_hash)
         info['hash'] = str(self.hash)
-        info['origin'] = str(self.origin)
-        info['nonce'] = str(self.nonce)
         info['data'] = str(self.data)
+        info['nonce'] = str(self.nonce)
 
         return info
 
     # Method to determine if the proof of work meets the conditions stored in config.py
     def is_valid(self):
-        sha = hashlib.sha256()
-        sha.update(self.header_string().encode('utf-8'))
-        verify_hash = sha.hexdigest()
-
-        if not self.hash == verify_hash:
-            return False
-
         self.update_self_hash()
         # Ensure there are the required number of leading zeros in the hash value
         if str(self.hash[0:NUM_ZEROS]) == '0' * NUM_ZEROS:

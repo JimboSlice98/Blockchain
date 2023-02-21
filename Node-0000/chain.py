@@ -1,7 +1,3 @@
-# Import from custom scripts
-from block import Block
-
-
 class Chain(object):
     # Object that receives a list of block objects
     def __init__(self, blocks):
@@ -15,22 +11,28 @@ class Chain(object):
           2) Each block's 'prev_hash' is the hash of the previous block
           3) The block's hash is valid and meets the required difficulty
         """
-        for index, cur_block in enumerate(self.blocks[1:]):
-            prev_block = self.blocks[index]
+        for index, cur_block in enumerate(self.blocks):
+            if index == 0:
+                if not cur_block.is_valid():
+                    print('Genesis block is invalid')
+
+                continue
+
+            prev_block = self.blocks[index - 1]
 
             # Check point 1) Are the indexes in order
             if prev_block.index + 1 != cur_block.index:
-                print('index error')
+                print('Index error at block:', index)
                 return False
 
             # Check point 2) Are the has values linked
             if prev_block.hash != cur_block.prev_hash:
-                print('hash error')
+                print('Hash error at block:', index)
                 return False
 
             # Check point 3) Is the hash of a block correct and does it meet the difficulty
             if not cur_block.is_valid():
-                print('block invalid')
+                print('Block', index, 'is invalid')
                 return False
 
         return True
@@ -64,7 +66,7 @@ class Chain(object):
         return False
 
     # NOT CURRENTLY USED, BUT COULD BE USED FOR TESTING
-    def most_recent_block(self):
+    def latest_block(self):
         return self.blocks[-1]
 
     # NOT CURRENTLY USED, BUT COULD BE USED FOR TESTING

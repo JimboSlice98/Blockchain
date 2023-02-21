@@ -1,6 +1,4 @@
-import os
 import utils
-import shutil
 
 # Import from custom scripts
 from config import *

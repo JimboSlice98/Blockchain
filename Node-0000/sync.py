@@ -1,6 +1,8 @@
+import aiohttp
+import asyncio
+import time
 import os
 import json
-import requests
 import glob
 
 # Import from custom scripts
@@ -20,6 +22,7 @@ def sync_local_dir():
                 try:
                     # Read local JSON block data stored in directory
                     block_info = json.load(block_file)
+                    block_file.close()
 
                 except:
                     print(filepath)
@@ -37,32 +40,45 @@ def sync_local_dir():
     return local_chain
 
 
-# Function to sync local directory with other nodes - CONSENSUS ALGORITHM IS HERE
-def sync_overall(save=False):
+async def get_blockchain(session, addr):
+    try:
+        async with session.get(addr) as response:
+            if response.status == 200:
+                # Store the given peer node's JSON object as a chain object
+                peer_blockchain_dict = await response.json(content_type=None)
+
+                # Convert the JSON objects to a list of block objects
+                peer_blocks = [Block(bdict) for bdict in peer_blockchain_dict]
+                # Convert the list of block objects to a chain object to check its validity
+                peer_chain = Chain(peer_blocks)
+
+                return peer_chain
+
+            else:
+                print(response.status)
+
+    except aiohttp.ClientConnectorError as e:
+        print(f'Peer at {addr.split("/")[2]} not running')
+
+
+async def sync_overall(save=False):
     best_chain = sync_local_dir()  # THIS NEEDS TO BE CHANGED ACCORDING TO CONSENSUS ALGORITHM
 
     # Initialise a database object from the local directory
     db = database.node_db()
     db.sync_local_dir()
 
-    # Query only active nodes for blockchain data
-    for addr in db.active_nodes:
-        try:
-            r = requests.get('http://' + addr + '/blockchain.json')
+    async with aiohttp.ClientSession() as session:
+        tasks = []
+        for addr in db.active_nodes:
+            url = f'http://{addr}/blockchain.json'
+            tasks.append(asyncio.ensure_future(get_blockchain(session, url)))
 
-        except requests.exceptions.RequestException as error:
-            print(error)
-            print('Peer at %s not running. Continuing to next peer.' % addr)
-
-        else:
-            print("Peer at %s is running, gathered blockchain data for analysis" % addr)
-            # Store the given peer node's JSON object as a chain object
-            peer_blockchain_dict = r.json()
-            # Convert the JSON objects to a list of block objects
-            peer_blocks = [Block(bdict) for bdict in peer_blockchain_dict]
-            # Convert the list of block objects to a chain object to check its validity
-            peer_chain = Chain(peer_blocks)
-            assert peer_chain.is_valid()
+        data = await asyncio.gather(*tasks)
+        for peer_chain in data:
+            # Exception handling for when no data is returned from a node address
+            if peer_chain is None:
+                continue
 
             # THIS IS THE CONSENSUS ALGORITHM - NEEDS WORK
             if peer_chain.is_valid() and len(peer_chain) > len(best_chain):
@@ -82,6 +98,26 @@ def sync_overall(save=False):
     return best_chain
 
 
-def sync(save=False):
+def validity_sync():
+    local_chain = sync_local_dir()
+    if not local_chain.is_valid():
+        print('LOCAL CHAIN IS CORRUPT, SYNCING WITH NETWORK')
+        sync(save=True)
 
-    return sync_overall(save=save)
+    return
+
+
+def sync(save=False):
+    start_time = time.time()
+    # sched.pause()
+    chain = asyncio.run(sync_overall(save=save))
+    print("--- Sync time: %s seconds ---" % (time.time() - start_time))
+    # sched.resume()
+
+    return chain
+
+
+if __name__ == '__main__':
+    start_time = time.time()
+    sync(save=True)
+    print("--- Validity sync time: %s seconds ---" % (time.time() - start_time))
