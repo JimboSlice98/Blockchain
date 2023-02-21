@@ -1,3 +1,7 @@
-a = 5
+data = {'Anuradha': 21, 'Haritha': 21, 'Arushi': 22, 'Mani': 21}
 
-print(f'Sample text {a}')
+print(data['Mani'])
+
+del data['Mani']
+
+print(data)

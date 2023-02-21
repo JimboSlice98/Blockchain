@@ -46,9 +46,9 @@ class node_db(object):
         move_addr = []
         del_addr = []
 
-        # Iterate through the active node addresses and remove inactive nodes (>1 mins)
+        # Iterate through the active node addresses and remove inactive nodes (>10 mins)
         for key in self.active_nodes:
-            if time_stamp - int(self.active_nodes[key]) > 1:
+            if time_stamp - int(self.active_nodes[key]) > 5:
                 # Add inactive node to the inactive list
                 self.inactive_nodes[key] = self.active_nodes[key]
                 move_addr.append(key)
@@ -67,4 +67,9 @@ class node_db(object):
         for key in del_addr:
             del self.inactive_nodes[key]
 
+        self.self_save()
+
+    def remove(self, addr):
+        # self.sync_local_dir()
+        del self.active_nodes[addr]
         self.self_save()

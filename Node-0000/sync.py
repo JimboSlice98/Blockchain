@@ -24,8 +24,8 @@ def sync_local_dir():
                     block_info = json.load(block_file)
                     block_file.close()
 
-                except:
-                    print(filepath)
+                except IOError as e:
+                    print(f'Cannot open {filepath}')
 
                 # Create block object from local JSON data
                 local_block = Block(block_info)

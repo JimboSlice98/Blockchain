@@ -48,11 +48,11 @@ def mine_listener(event):
 
             # Start the mining job for the next block
             next_block = utils.create_new_block(prev_block=sync.sync_local_dir().latest_block())
-            sched.add_job(mine, kwargs={'block': next_block, 'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining')
+            sched.add_job(mine, kwargs={'block': next_block, 'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining', misfire_grace_time=None)
 
         # The block has not been mined so restart with an increased nonce range
         else:
-            sched.add_job(mine, kwargs={'block': new_block, 'rounds': rounds, 'start_nonce': start_nonce+rounds}, id='mining')
+            sched.add_job(mine, kwargs={'block': new_block, 'rounds': rounds, 'start_nonce': start_nonce+rounds}, id='mining', misfire_grace_time=None)
 
 
 # Function to broadcast a given mined block to the network
@@ -70,12 +70,14 @@ def broadcast_mined_block(new_block):
     # Broadcast JSON object via post request to active nodes only
     for addr in db.active_nodes:
         try:
-            r = requests.post('http://' + addr + '/mined', json=block_info_dict)
+            r = requests.post('http://' + addr + '/mined', json=block_info_dict, timeout=1)
 
         except requests.exceptions.RequestException as error:
-            print(error, r.status_code)
+            print(error)
             print('Peer at %s not running. Continuing to next peer.' % addr)
             dead.append(addr)
+
+            continue
 
         # Handling for when a node accepts the block
         if r.status_code == 200:
@@ -86,10 +88,18 @@ def broadcast_mined_block(new_block):
             print('Peer at %s refused block: %s' % (addr, new_block.index))
             rejected.append(addr)
 
+    # Remove dead nodes from database
+    for addr in dead:
+        db.remove(addr)
+
     print('A:', len(accepted), ' R:', len(rejected), ' D:', len(dead))
 
     # Only save the block if it is accepted by the network
-    if len(accepted) / (len(accepted) + len(rejected) + 0.001) >= 0.51:
+    if len(accepted) + len(rejected) == 0:
+        new_block.self_save()
+        return
+
+    if len(accepted) / (len(accepted) + len(rejected)) >= 0.51:
         new_block.self_save()
         return
 
@@ -131,6 +141,11 @@ def validate_network_block(network_block):
 
     # Start mining for the next block after the received block
     next_block = utils.create_new_block(prev_block=network_block)
-    sched.add_job(mine, kwargs={'block': next_block, 'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining')
+    sched.add_job(mine, kwargs={'block': next_block, 'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining', misfire_grace_time=None)
 
     return True
+
+
+def mine_sched():
+    if not sched.get_job('mining'):
+        sched.add_job(mine, kwargs={'block': utils.create_new_block(), 'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining', misfire_grace_time=None)
