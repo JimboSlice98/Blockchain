@@ -33,11 +33,11 @@ class node_db(object):
                     # Read JSON database file stored in local directory
                     data = json.load(data_file)
 
+                    self.active_nodes = data['active_nodes']
+                    self.inactive_nodes = data['inactive_nodes']
+
                 except:
                     print(filepath)
-
-        self.active_nodes = data['active_nodes']
-        self.inactive_nodes = data['inactive_nodes']
 
     def clean(self):
         self.sync_local_dir()

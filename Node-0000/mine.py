@@ -39,16 +39,17 @@ def mine_listener(event):
     if event.job_id == 'mining':
         # Receives a tuple from the scheduler upon job execution
         new_block, rounds, start_nonce, status = event.retval
-        # The block has been mined so broadcast and save
+        # Check if the block has been mined
         if status:
-            # Save new block and broadcast to peer nodes
-            # print('BROADCASTING BLOCK TO NETWORK...')
-            broadcast_mined_block(new_block)
-            print('BROADCAST COMPLETE')
+            # Broadcast new block and start the mining job for the next block if accepted
+            if broadcast_mined_block(new_block):
+                next_block = utils.create_new_block(prev_block=new_block)
+                sched.add_job(mine, kwargs={'block': next_block, 'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining', misfire_grace_time=None)
+                print('BROADCAST COMPLETE')
 
-            # Start the mining job for the next block
-            next_block = utils.create_new_block(prev_block=sync.sync_local_dir().latest_block())
-            sched.add_job(mine, kwargs={'block': next_block, 'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining', misfire_grace_time=None)
+            # The block has not been accepted by the network and the local directory has been updated
+            else:
+                sched.add_job(mine, kwargs={'block': utils.create_new_block(), 'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining', misfire_grace_time=None)
 
         # The block has not been mined so restart with an increased nonce range
         else:
@@ -70,7 +71,7 @@ def broadcast_mined_block(new_block):
     # Broadcast JSON object via post request to active nodes only
     for addr in db.active_nodes:
         try:
-            r = requests.post('http://' + addr + '/mined', json=block_info_dict, timeout=1)
+            r = requests.post('http://' + addr + '/mined', json=block_info_dict)
 
         except requests.exceptions.RequestException as error:
             print(error)
@@ -88,25 +89,24 @@ def broadcast_mined_block(new_block):
             print('Peer at %s refused block: %s' % (addr, new_block.index))
             rejected.append(addr)
 
-    # Remove dead nodes from database
-    for addr in dead:
-        db.remove(addr)
+    # # Remove dead nodes from database
+    # for addr in dead:
+    #     db.remove(addr)
 
     print('A:', len(accepted), ' R:', len(rejected), ' D:', len(dead))
 
     # Only save the block if it is accepted by the network
     if len(accepted) + len(rejected) == 0:
         new_block.self_save()
-        return
+        return True
 
     if len(accepted) / (len(accepted) + len(rejected)) >= 0.51:
         new_block.self_save()
-        return
+        return True
 
     else:
         sync.sync(save=True)
-
-    return
+        return False
 
 
 # Function to determine if the received block is valid
@@ -122,12 +122,12 @@ def validate_network_block(network_block):
 
     # Check point 2) Are the has values linked
     if network_block.prev_hash != cur_block.hash:
-        print('VPB: Hash error')
+        # print('VPB: Hash error')
         return False
 
     # Check point 3) Is the hash of a block correct and does it meet the difficulty
     if not network_block.is_valid():
-        print('VPB: Block invalid')
+        # print('VPB: Block invalid')
         return False
 
     # Therefore the new block is valid so needs to be saved

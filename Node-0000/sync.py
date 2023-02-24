@@ -70,6 +70,7 @@ async def sync_overall(save=False):
 
     async with aiohttp.ClientSession() as session:
         tasks = []
+        start_time = time.time()
         for addr in db.active_nodes:
             url = f'http://{addr}/blockchain.json'
             tasks.append(asyncio.ensure_future(get_blockchain(session, url)))
@@ -95,6 +96,8 @@ async def sync_overall(save=False):
         # Save the new chain in the local directory
         best_chain.self_save()
 
+    print("--- Sync time: %s seconds ---" % (time.time() - start_time))
+
     return best_chain
 
 
@@ -108,16 +111,12 @@ def validity_sync():
 
 
 def sync(save=False):
-    start_time = time.time()
-    # sched.pause()
+    # start_time = time.time()
     chain = asyncio.run(sync_overall(save=save))
-    print("--- Sync time: %s seconds ---" % (time.time() - start_time))
-    # sched.resume()
+    # print("--- Sync time: %s seconds ---" % (time.time() - start_time))
 
     return chain
 
 
 if __name__ == '__main__':
-    start_time = time.time()
     sync(save=True)
-    print("--- Validity sync time: %s seconds ---" % (time.time() - start_time))

@@ -121,6 +121,7 @@ def init():
         print('No nodes running on network')
         # Check if there are JSON files in local directory
         if glob.glob(os.path.join(CHAINDATA_DIR, '*.json')):
+            utils.node_txt(port)
             # Ask user if they want to reload previous data
             while True:
                 answer = input('Previous blockchain data detected, attempt to reload? (Y/N): ')

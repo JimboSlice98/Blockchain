@@ -108,7 +108,7 @@ if __name__ == '__main__':
     # Add the database cleaning,status update and validity sync jobs to the BackgroundScheduler
     sched.add_job(db.clean, 'interval', minutes=5, misfire_grace_time=None)
     sched.add_job(utils.update_status, 'interval', kwargs={'port': port}, minutes=1, misfire_grace_time=None)
-    sched.add_job(sync.validity_sync, 'interval', seconds=30, misfire_grace_time=None)
+    # sched.add_job(sync.validity_sync, 'interval', seconds=30, misfire_grace_time=None)
     # sched.add_job(mine.mine_sched, 'interval', seconds=30, misfire_grace_time=None)
 
     # Start the BackgroundScheduler
