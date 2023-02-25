@@ -37,7 +37,7 @@ class node_db(object):
                     self.inactive_nodes = data['inactive_nodes']
 
                 except:
-                    print(filepath)
+                    return False
 
     def clean(self):
         self.sync_local_dir()

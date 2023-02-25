@@ -50,6 +50,9 @@ def mined():
     network_block = Block(request.get_json())
 
     if mine.validate_network_block(network_block) != True:
+        # Resume mining job
+        sched.resume()
+
         return jsonify(received=False), 409
 
     # Resume mining job

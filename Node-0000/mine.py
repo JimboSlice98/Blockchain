@@ -117,12 +117,10 @@ def validate_network_block(network_block):
     chain = sync.sync_local_dir()
     cur_block = chain.latest_block()
 
-    print('Network block received')
-    sched.print_jobs()
-
     # Check point 1) Are the indexes in order
     if network_block.index - 1 != cur_block.index:
         # print('VPB: Index error')
+
         # Sync with the network if the received block is more than three ahead of the local chain
         if network_block.index >= cur_block.index + 4:
             remove_mine_job()
@@ -140,24 +138,9 @@ def validate_network_block(network_block):
         # print('VPB: Block invalid')
         return False
 
-    # # Therefore the new block is valid so needs to be saved
-    # network_block.self_save()
-    #
-    # # Remove all mining jobs as they will contain higher nonce ranges
-    # try:
-    #     sched.remove_job('mining')
-    #     print('\nBLOCK DEPRECIATED\n')
-    #
-    # except apscheduler.jobstores.base.JobLookupError as error:
-    #     print(error)
-    #
-    # # Start mining for the next block after the received block
-    # next_block = utils.create_new_block(prev_block=network_block)
-    # sched.add_job(mine, kwargs={'block': next_block, 'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining', misfire_grace_time=None)
-
+    # Remove current mining jobs and save network block
     remove_mine_job()
     sched.add_job(validate_network_block_listener, kwargs={'network_block': network_block}, misfire_grace_time=None)
-    sched.print_jobs()
 
     return True
 
@@ -174,6 +157,7 @@ def validate_network_block_listener(network_block=None):
         network_block.self_save()
 
     # Start mining for the next block after the network sync or network block
+    remove_mine_job()
     next_block = utils.create_new_block(prev_block=network_block)
     sched.add_job(mine, kwargs={'block': next_block, 'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining', misfire_grace_time=None)
 
@@ -181,7 +165,6 @@ def validate_network_block_listener(network_block=None):
 def remove_mine_job():
     try:
         sched.remove_job('mining')
-        print("Removed mining job as block is depreciated")
         return True
 
     except apscheduler.jobstores.base.JobLookupError:
