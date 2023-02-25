@@ -1,5 +1,5 @@
 import requests
-from datetime import datetime
+import sys
 import apscheduler
 
 # Import from custom scripts
@@ -8,6 +8,7 @@ from config import *
 import utils
 import sync
 import database
+import main
 
 
 sched = None
@@ -16,14 +17,15 @@ sched = None
 def mine(block, rounds=STANDARD_ROUNDS, start_nonce=0):
     mined = False
     # Mine a given block with nonce values in the range dictated by 'start_nonce' and 'rounds'
-    # print('MINING FOR BLOCK %s. START NONCE: %s, ROUNDS: %s' % (block.index, start_nonce, rounds))
+    sys.stdout.write('\rMining block %s, Nonce: %s' % (block.index, start_nonce))
+    sys.stdout.flush()
     nonce_range = [start_nonce+i for i in range(rounds)]
     for nonce in nonce_range:
         block.nonce = nonce
         block.update_self_hash()
         # If a valid nonce value has been found, the block has been mined
         if str(block.hash[0:NUM_ZEROS]) == '0' * NUM_ZEROS:
-            print('BLOCK %s MINED. NONCE: %s' % (block.index, block.nonce))
+            print('\n\nBLOCK %s MINED. NONCE: %s' % (block.index, block.nonce))
             assert block.is_valid()
             mined = True
 
@@ -45,7 +47,7 @@ def mine_listener(event):
             if broadcast_mined_block(new_block):
                 next_block = utils.create_new_block(prev_block=new_block)
                 sched.add_job(mine, kwargs={'block': next_block, 'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining', misfire_grace_time=None)
-                print('BROADCAST COMPLETE')
+                print('BROADCAST COMPLETE\n')
 
             # The block has not been accepted by the network and the local directory has been updated
             else:
@@ -130,12 +132,18 @@ def validate_network_block(network_block):
         # print('VPB: Block invalid')
         return False
 
+    # # Sync with the network if the received block is more than three ahead of the local chain
+    # if network_block.index >= cur_block.index + 4:
+    #     sched.add_job(validate_network_block_listener, kwargs={'network_block': None}, misfire_grace_time=None)
+
     # Therefore the new block is valid so needs to be saved
     network_block.self_save()
+
     # Remove all mining jobs as they will contain higher nonce ranges
     try:
         sched.remove_job('mining')
-        print("Removed mining job as block is depreciated")
+        print('\nBLOCK DEPRECIATED')
+
     except apscheduler.jobstores.base.JobLookupError as error:
         print(error)
 
@@ -143,9 +151,32 @@ def validate_network_block(network_block):
     next_block = utils.create_new_block(prev_block=network_block)
     sched.add_job(mine, kwargs={'block': next_block, 'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining', misfire_grace_time=None)
 
+    # sched.add_job(validate_network_block_listener, kwargs={'network_block': network_block}, misfire_grace_time=None)
+
     return True
 
 
-def mine_sched():
-    if not sched.get_job('mining'):
-        sched.add_job(mine, kwargs={'block': utils.create_new_block(), 'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining', misfire_grace_time=None)
+def validate_network_block_listener(network_block=None):
+    # Network block is more than three ahead of local chain so the node needs to sync with the network
+    if network_block is None:
+        sync.sync(save=True)
+
+    # Network block is valid so needs to be saved
+    else:
+        network_block.self_save()
+
+    # Remove all mining jobs as they will have the wrong block and nonce ranges
+    try:
+        main.sched.remove_job('mining')
+        print("Removed mining job as block is depreciated")
+    except apscheduler.jobstores.base.JobLookupError as error:
+        print(error)
+
+    # Start mining for the next block after the network sync or network block
+    next_block = utils.create_new_block(prev_block=network_block)
+    sched.add_job(mine, kwargs={'block': next_block, 'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining', misfire_grace_time=None)
+
+
+# def mine_sched():
+#     if not main.sched.get_job('mining'):
+#         main.sched.add_job(mine, kwargs={'block': utils.create_new_block(), 'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining', misfire_grace_time=None)

@@ -1,7 +1,7 @@
 CHAINDATA_DIR = 'chaindata/'
 NUM_ZEROS = 6
 
-server_addr = 'http://146.169.243.124:5050'
+server_addr = 'http://146.169.219.134:5050'
 
 PEERS = [
     'http://localhost:5000/',

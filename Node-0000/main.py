@@ -2,6 +2,7 @@ import json
 from flask import Flask, jsonify, request
 import apscheduler
 from apscheduler.schedulers.background import BackgroundScheduler
+import logging
 
 # Import from custom scripts
 from block import Block
@@ -17,6 +18,8 @@ from config import *
 node = Flask(__name__)
 sched = BackgroundScheduler(standalone=True)
 mine.sched = sched
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 db = database.node_db()
 
 
