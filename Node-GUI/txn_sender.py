@@ -5,6 +5,7 @@ from tqdm import tqdm
 
 
 def txn_gen(comp_names):
+    rd.randint(100000000, 999999999)
     price = rd.randint(0, 500)
 
     txn = {'id': rd.randint(100000000, 999999999),

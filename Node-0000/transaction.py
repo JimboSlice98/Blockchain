@@ -66,7 +66,7 @@ class trans_db(object):
     #
     #     self.self_save()
 
-    # def remove(self, id):
-    #     # self.sync_local_dir()
-    #     del self.trans[id]
-    #     self.self_save()
+    def remove(self, id):
+        # self.sync_local_dir()
+        del self.trans[id]
+        self.self_save()

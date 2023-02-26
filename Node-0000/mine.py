@@ -8,7 +8,7 @@ from config import *
 import utils
 import sync
 import database
-import main
+import transaction as txn
 
 
 sched = None
@@ -100,6 +100,16 @@ def broadcast_mined_block(new_block):
     # Only save the block if it is accepted by the network
     if len(accepted) + len(rejected) == 0:
         new_block.self_save()
+
+        # Remove transactions from database
+        valid_txns = new_block.data
+        print(valid_txns)
+        db = txn.trans_db()
+        db.sync_local_dir()
+
+        for addr in valid_txns:
+            db.remove()
+
         return True
 
     if len(accepted) / (len(accepted) + len(rejected)) >= 0.51:

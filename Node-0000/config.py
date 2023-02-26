@@ -1,7 +1,8 @@
 CHAINDATA_DIR = 'chaindata/'
-NUM_ZEROS = 6
+NUM_ZEROS = 5
+NUM_TXNS = 2
 
-server_addr = 'http://146.169.219.134:5050'
+server_addr = 'http://146.169.214.170:5050'
 
 BLOCK_VAR_CONVERSIONS = {'index': int, 'timestamp': int, 'prev_hash': str, 'hash': str, 'origin': str, 'nonce': int}
 
