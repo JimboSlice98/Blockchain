@@ -47,12 +47,11 @@ def create_new_block(prev_block=None, timestamp=None, origin=None, data=None):
 
     if not data:
         # Initialise a transaction database object from the local directory
-        print('No data in block')
-        db = txn.trans_db()
-        db.sync_local_dir()
+        txn_db = txn.trans_db()
+        txn_db.sync_local_dir()
 
         # Add the first 20 transaction to the new block
-        data = db.trans[0:NUM_TXNS]
+        data = txn_db.trans[0:NUM_TXNS]
 
     if not origin:
         filename = '%s/data.txt' % (CHAINDATA_DIR)

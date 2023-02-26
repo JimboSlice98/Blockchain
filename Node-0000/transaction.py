@@ -66,7 +66,8 @@ class trans_db(object):
     #
     #     self.self_save()
 
-    def remove(self, id):
-        # self.sync_local_dir()
-        del self.trans[id]
+    def remove(self, valid_txns):
+        self.sync_local_dir()
+        self.trans = [txn for txn in self.trans if txn not in valid_txns]
+
         self.self_save()

@@ -101,19 +101,19 @@ def broadcast_mined_block(new_block):
     if len(accepted) + len(rejected) == 0:
         new_block.self_save()
 
-        # Remove transactions from database
-        valid_txns = new_block.data
-        print(valid_txns)
-        db = txn.trans_db()
-        db.sync_local_dir()
-
-        for addr in valid_txns:
-            db.remove()
+        # Remove transactions from local database
+        txn_db = txn.trans_db()
+        txn_db.remove(new_block.data)
 
         return True
 
     if len(accepted) / (len(accepted) + len(rejected)) >= 0.51:
         new_block.self_save()
+
+        # Remove transactions from local database
+        txn_db = txn.trans_db()
+        txn_db.remove(new_block.data)
+
         return True
 
     else:

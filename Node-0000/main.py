@@ -111,12 +111,12 @@ def transaction():
     data = request.get_json()
 
     # Initialise a transaction database object from the local directory
-    db = txn.trans_db()
-    db.sync_local_dir()
+    txn_db = txn.trans_db()
+    txn_db.sync_local_dir()
 
     # Add new node address to the database and save to the local directory
-    db.trans.append(data)
-    db.self_save()
+    txn_db.trans.append(data)
+    txn_db.self_save()
 
     return jsonify(received=True)
 
