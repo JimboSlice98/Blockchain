@@ -1,9 +1,4 @@
-import requests
+import random as rd
 
-
-try:
-    requests.post('http://146.169.250.232:5050/mined', json={"key":"value"})
-
-except requests.exceptions.RequestException as error:
-    print(error)
-    print('Peer at %s not running. Continuing to next peer.' % addr)
+for i in range(100):
+    print(rd.randint(0, 10))

@@ -37,7 +37,6 @@ class node_db(object):
                     self.inactive_nodes = data['inactive_nodes']
 
                 except:
-                    print('Local node database not available')
                     return False
 
     def clean(self):

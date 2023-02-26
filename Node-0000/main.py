@@ -10,6 +10,7 @@ import sync
 import mine
 import init
 import database
+import transaction as txn
 import utils
 from config import *
 
@@ -21,6 +22,7 @@ mine.sched = sched
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
 db = database.node_db()
+trans_db = txn.trans_db()
 
 
 # Function to return the blockchain stored on a given node when queried
@@ -98,6 +100,22 @@ def new_node():
 
     # Add new node address to the database and save to the local directory
     db.active_nodes[data[0]] = data[1]
+    db.self_save()
+
+    return jsonify(received=True)
+
+
+@node.route('/transaction', methods=['POST'])
+def transaction():
+    # Capture JSON data
+    data = request.get_json()
+
+    # Initialise a transaction database object from the local directory
+    db = txn.trans_db()
+    db.sync_local_dir()
+
+    # Add new node address to the database and save to the local directory
+    db.trans.append(data)
     db.self_save()
 
     return jsonify(received=True)
