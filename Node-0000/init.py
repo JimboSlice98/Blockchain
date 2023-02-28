@@ -29,6 +29,8 @@ def genesis(port):
     first_block = utils.create_new_block()  # CLARIFY THIS IN THE FUTURE
     first_block.update_self_hash()
     while str(first_block.hash[0:NUM_ZEROS]) != '0' * NUM_ZEROS:
+        # sys.stdout.write('\rMining genesis block, Nonce: %s' % first_block.nonce)
+        # sys.stdout.flush()
         first_block.nonce += 1
         first_block.update_self_hash()
 

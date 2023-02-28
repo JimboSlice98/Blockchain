@@ -1,3 +1,4 @@
+import ast
 import hashlib
 import json
 
@@ -13,15 +14,27 @@ class Block(object):
             if key in BLOCK_VAR_CONVERSIONS:
                 setattr(self, key, BLOCK_VAR_CONVERSIONS[key](value))
 
+            # Convert data list string back to list
+            elif key == 'data':
+                if type(value) == list:
+                    setattr(self, key, value)
+                    # print(key, value, 'The received data was a list')
+
+                else:
+                    setattr(self, key, ast.literal_eval(value))
+                    # print(key, value, 'List conversion')
+
+            # Handling for additional attributes
             else:
+                print(key, value, 'Here')
                 setattr(self, key, value)
 
-        # Need to add a 'hash' and 'nonce' and attributes to the genesis block only
-        if not hasattr(self, 'hash'):
-            self.hash = self.update_self_hash()
-
-        if not hasattr(self, 'nonce'):
-            self.nonce = 'None'
+        # # Need to add a 'hash' and 'nonce' and attributes to the genesis block only
+        # if not hasattr(self, 'hash'):
+        #     self.hash = self.update_self_hash()
+        #
+        # if not hasattr(self, 'nonce'):
+        #     self.nonce = 'None'
 
     # Method to compile a given block's attributes into a single string
     def header_string(self):
@@ -81,6 +94,7 @@ class Block(object):
 
     def __repr__(self):
         return "Block<index: %s>, <hash: %s>" % (self.index, self.hash)
+        # return f'Block {self.index}, data {self.data}, data type {type(self.data)}'
 
     def __eq__(self, other):
         return (self.index == other.index and

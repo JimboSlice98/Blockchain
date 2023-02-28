@@ -166,6 +166,10 @@ def validate_network_block_listener(network_block=None):
         print('\nBLOCK DEPRECIATED\n')
         network_block.self_save()
 
+        # Remove transactions from local database
+        txn_db = txn.trans_db()
+        txn_db.remove(network_block.data)
+
     # Start mining for the next block after the network sync or network block
     remove_mine_job()
     next_block = utils.create_new_block(prev_block=network_block)

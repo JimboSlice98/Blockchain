@@ -37,5 +37,11 @@ data = my_file.read()
 comp_names = data.split('\n')
 my_file.close()
 
-for i in tqdm(range(0, 20)):
-    requests.post('http://146.169.241.90:5000/transaction', json=txn_gen(comp_names))
+for i in tqdm(range(0, 100)):
+    data = txn_gen(comp_names)
+    data['id'] = i
+    requests.post('http://155.198.9.71:5000/transaction', json=data)
+    requests.post('http://155.198.9.72:5000/transaction', json=data)
+    # requests.post('http://146.169.253.216:5000/transaction', json=data)
+
+    # print(data)

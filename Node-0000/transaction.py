@@ -69,5 +69,7 @@ class trans_db(object):
     def remove(self, valid_txns):
         self.sync_local_dir()
         self.trans = [txn for txn in self.trans if txn not in valid_txns]
+        print(f'Validated transactions: {valid_txns}')
+        # print(f'Remaining transactions: {self.trans}')
 
         self.self_save()
