@@ -10,6 +10,7 @@ from chain import Chain
 from config import *
 from block import Block
 import database
+import transaction as txn
 
 
 # Function to create chain object from local directory
@@ -72,7 +73,7 @@ async def sync_overall(save=False):
         tasks = []
         start_time = time.time()
         for addr in db.active_nodes:
-            url = f'http://{addr}/blockchain.json'
+            url = f'http://{addr}/blockchain'
             tasks.append(asyncio.ensure_future(get_blockchain(session, url)))
 
         data = await asyncio.gather(*tasks)
@@ -96,7 +97,7 @@ async def sync_overall(save=False):
         # Save the new chain in the local directory
         best_chain.self_save()
 
-    print("--- Sync time: %s seconds ---" % (time.time() - start_time))
+    print("--- Blockchain sync time: %s seconds ---" % (time.time() - start_time))
 
     return best_chain
 
@@ -111,11 +112,61 @@ def validity_sync():
 
 
 def sync(save=False):
-    # start_time = time.time()
     chain = asyncio.run(sync_overall(save=save))
-    # print("--- Sync time: %s seconds ---" % (time.time() - start_time))
+    asyncio.run(sync_transactions())
 
     return chain
+
+
+async def get_trans(session, addr):
+    try:
+        async with session.get(addr) as response:
+            if response.status == 200:
+                # Return a given node's transactions
+                return await response.json(content_type=None)
+
+            else:
+                print(response.status)
+
+    except aiohttp.ClientConnectorError as e:
+        print(f'Peer at {addr.split("/")[2]} not running')
+
+
+async def sync_transactions():
+    # Initialise a database object from the local directory
+    db = database.node_db()
+    db.sync_local_dir()
+
+    # Initialise a transaction database object from the local directory
+    txn_db = txn.trans_db()
+    txn_db.sync_local_dir()
+
+    async with aiohttp.ClientSession() as session:
+        tasks = []
+        start_time = time.time()
+        for addr in db.active_nodes:
+            url = f'http://{addr}/get_transactions'
+            tasks.append(asyncio.ensure_future(get_trans(session, url)))
+
+        data = await asyncio.gather(*tasks)
+
+        pending_trans = []
+        for txns_list in data:
+            for transaction in txns_list:
+                if (not transaction in pending_trans) and (not transaction in txn_db.trans):
+                    pending_trans.append(transaction)
+
+    # Initialise a transaction database object from the local directory
+    txn_db = txn.trans_db()
+    txn_db.sync_local_dir()
+
+    # Add new node address to the database and save to the local directory
+    txn_db.trans = txn_db.trans + pending_trans
+    txn_db.self_save()
+
+    print("--- Transaction sync time: %s seconds ---" % (time.time() - start_time))
+
+    return
 
 
 if __name__ == '__main__':

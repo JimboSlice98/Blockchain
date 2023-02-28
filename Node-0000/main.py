@@ -26,7 +26,7 @@ trans_db = txn.trans_db()
 
 
 # Function to return the blockchain stored on a given node when queried
-@node.route('/blockchain.json', methods=['GET'])
+@node.route('/blockchain', methods=['GET'])
 def blockchain():
     # Pause the mining job to free headroom for sync
     sched.pause()
@@ -121,12 +121,30 @@ def transaction():
     return jsonify(received=True)
 
 
+@node.route('/get_transactions', methods=['GET'])
+def get_transactions():
+    # Pause the mining job to free headroom for sync
+    sched.pause()
+
+    # Initialise a transaction database object from the local directory
+    txn_db = txn.trans_db()
+    txn_db.sync_local_dir()
+
+    # Convert database to JSON object to be sent over HTML
+    json_data = json.dumps(txn_db.trans)
+
+    # Resume mining job
+    sched.resume()
+
+    return json_data
+
+
 if __name__ == '__main__':
     # Initialisation sequence of node
     port = init.init()
 
     # Add a mining job and listener to the BackgroundScheduler
-    sched.add_job(mine.mine, kwargs={'block': utils.create_new_block(), 'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining')
+    # sched.add_job(mine.mine, kwargs={'block': utils.create_new_block(), 'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining')
     sched.add_listener(mine.mine_listener, apscheduler.events.EVENT_JOB_EXECUTED)
 
     # Add the database cleaning,status update and validity sync jobs to the BackgroundScheduler
