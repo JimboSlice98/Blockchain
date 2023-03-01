@@ -1,3 +1,6 @@
+import transaction as txn
+
+
 class Chain(object):
     # Object that receives a list of block objects
     def __init__(self, blocks):
@@ -65,9 +68,19 @@ class Chain(object):
 
         return False
 
-    # NOT CURRENTLY USED, BUT COULD BE USED FOR TESTING
     def latest_block(self):
         return self.blocks[-1]
+
+    def txn_list(self):
+        valid_trans = []
+        for block in self.blocks:
+            valid_trans = valid_trans + block.data
+
+        # Remove transactions from local database
+        txn_db = txn.trans_db()
+        txn_db.remove(valid_trans)
+
+        return
 
     # NOT CURRENTLY USED, BUT COULD BE USED FOR TESTING
     def max_index(self):
