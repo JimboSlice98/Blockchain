@@ -5,6 +5,7 @@ import requests
 import database
 import os
 import shutil
+import hashlib
 
 # Import from custom scripts
 from config import *
@@ -67,6 +68,47 @@ def create_new_block(prev_block=None, timestamp=None, origin=None, data=None):
     new_block = block.Block(block_info_dict)
 
     return new_block
+
+
+def load_txns():
+    # Initialise a transaction database object from the local directory
+    txn_db = txn.trans_db()
+    txn_db.sync_local_dir()
+
+    # Add the first 20 transaction to the new block
+    data = txn_db.trans[0:NUM_TXNS]
+    merkleRoot = merkle(data)
+
+
+# Function to compute the combines value of two hashes
+def hash2(a, b):
+    # Reverse inputs before and after hashing due to big-endian / little-endian nonsense
+    a1 = a[::-1]
+    b1 = b[::-1]
+    combinedHash = a1 + b1
+
+    sha = hashlib.sha256()
+    sha.update(combinedHash.encode('utf-8'))
+    hash = sha.hexdigest()
+
+    return hash
+
+
+# Function to hash a pair of items recursively to find the Merkle root
+def merkle(hashList):
+    if len(hashList) == 1:
+        return hashList[0]
+
+    newHashList = []
+    # Process pairs. For odd length, the last is skipped
+    for i in range(0, len(hashList) - 1, 2):
+        newHashList.append(hash2(hashList[i], hashList[i+1]))
+
+    # Hash the last item twice if the list contains an odd number of items
+    if len(hashList) % 2 == 1:
+        newHashList.append(hash2(hashList[-1], hashList[-1]))
+
+    return merkle(newHashList)
 
 
 def node_txt(port):
