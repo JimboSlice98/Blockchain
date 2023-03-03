@@ -11,11 +11,13 @@ import sync
 import database
 import utils
 import config
+import mine
 from config import *
 
 
 # Supress logging being printed to the terminal
 logging.getLogger('urllib3').propagate = False
+sched = None
 
 
 def genesis(port):
@@ -28,14 +30,11 @@ def genesis(port):
     # Create first block object and save to local directory
     first_block = utils.create_new_block()  # CLARIFY THIS IN THE FUTURE
     first_block.update_self_hash()
-    while str(first_block.hash[0:NUM_ZEROS]) != '0' * NUM_ZEROS:
-        # sys.stdout.write('\rMining genesis block, Nonce: %s' % first_block.nonce)
-        # sys.stdout.flush()
-        first_block.nonce += 1
-        first_block.update_self_hash()
 
-    assert first_block.is_valid()
-    first_block.self_save()
+    sched.add_job(mine.mine, kwargs={'block': first_block, 'rounds': STANDARD_ROUNDS, 'start_nonce': 0}, id='mining')
+
+    # assert first_block.is_valid()
+    # first_block.self_save()
 
 
 def init():
@@ -139,14 +138,12 @@ def init():
                         print('Creating genesis block...')
                         # Create the first block from scratch
                         genesis(port)
-                        print('Genesis block created')
                         break
 
                 elif answer.upper() == 'N':
                     print('Creating genesis block...')
                     # Create the first block from scratch
                     genesis(port)
-                    print('Genesis block created')
                     break
 
                 else:
@@ -157,7 +154,6 @@ def init():
             print('Creating genesis block...')
             # Create the first block from scratch
             genesis(port)
-            print('Genesis block created')
 
     # Condition for running nodes on network
     else:

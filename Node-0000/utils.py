@@ -47,7 +47,6 @@ def create_new_block(prev_block=None, timestamp=None, origin=None, data=None):
         prev_hash = prev_block.hash
 
     if not data:
-        print(f'No data')
         merkleRoot, data = load_txns()
 
     else:
@@ -189,6 +188,6 @@ if __name__ == '__main__':
     block = create_new_block()
     print(block)
 
-    block.update_merkle()
-
-    print(block)
+    # block.update_merkle()
+    #
+    # print(block)

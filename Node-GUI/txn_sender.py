@@ -75,20 +75,11 @@ comp_names = data.split('\n')
 my_file.close()
 
 txn_list = []
-hash_list = []
-for i in range(0, 2):
+for i in tqdm(range(0, 100)):
     txn = txn_gen(comp_names)
-
     txn_list.append(txn)
-    hash_list.append(txn['id'])
 
-    # data['id'] = i
-    # requests.post('http://155.198.45.126:5000/transaction', json=data)
-    # requests.post('http://155.198.45.127:5000/transaction', json=data)
-    # # requests.post('http://155.198.40.248:5000/transaction', json=data)
-    # # requests.post('http://155.198.9.74:5000/transaction', json=data)
-    # requests.post('http://146.169.250.95:5000/transaction', json=data)
+    requests.post('http://146.169.139.149:5000/transaction', json=txn)
+    requests.post('http://146.169.251.215:5000/transaction', json=txn)
 
-print(json.dumps(txn_list))
-#
-# print(merkle(hashList=hash_list))
+txn_list

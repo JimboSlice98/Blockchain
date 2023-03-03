@@ -133,7 +133,7 @@ class Block(object):
 
     def __repr__(self):
         # return "Block<index: %s>, <hash: %s>" % (self.index, self.hash)
-        return f'Block: {self.index}, merkle: {self.merkle}, data: {self.data}'
+        return f'Block: {self.index}, merkle: {self.merkle}, number txns: {len(self.data)}'
 
     def __eq__(self, other):
         return (self.index == other.index and
