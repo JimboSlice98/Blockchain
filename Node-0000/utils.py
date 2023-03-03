@@ -1,5 +1,4 @@
 from datetime import datetime
-import block
 import socket
 import requests
 import database
@@ -9,6 +8,7 @@ import hashlib
 
 # Import from custom scripts
 from config import *
+import block
 import sync
 import transaction as txn
 
@@ -47,12 +47,15 @@ def create_new_block(prev_block=None, timestamp=None, origin=None, data=None):
         prev_hash = prev_block.hash
 
     if not data:
-        # Initialise a transaction database object from the local directory
-        txn_db = txn.trans_db()
-        txn_db.sync_local_dir()
+        print(f'No data')
+        merkleRoot, data = load_txns()
 
-        # Add the first 20 transaction to the new block
-        data = txn_db.trans[0:NUM_TXNS]
+    else:
+        hashList = []
+        for txn in data:
+            hashList.append(txn['id'])
+
+        merkleRoot = merkle(hashList)
 
     if not origin:
         filename = '%s/data.txt' % (CHAINDATA_DIR)
@@ -63,30 +66,43 @@ def create_new_block(prev_block=None, timestamp=None, origin=None, data=None):
         timestamp = datetime.utcnow().strftime('%Y%m%d%H%M%S%f')
 
     nonce = 0
-    block_info_dict = dict_from_block_attributes(index=index, timestamp=timestamp, prev_hash=prev_hash,
-                                                 hash=None, origin=origin, nonce=nonce, data=data)
+    block_info_dict = dict_from_block_attributes(index=index, timestamp=timestamp, prev_hash=prev_hash, hash=None,
+                                                 origin=origin, merkle=merkleRoot, nonce=nonce, data=data)
+
     new_block = block.Block(block_info_dict)
 
     return new_block
 
 
+# Function to load transaction from the local directory and return the Merkle root
 def load_txns():
     # Initialise a transaction database object from the local directory
     txn_db = txn.trans_db()
     txn_db.sync_local_dir()
 
-    # Add the first 20 transaction to the new block
+    # Add the first n transaction to the new block
     data = txn_db.trans[0:NUM_TXNS]
-    merkleRoot = merkle(data)
+
+    if len(data) == 0:
+        # Return the Merkel root of a blank string without computation
+        merkleRoot = '0000000000000000000000000000000000000000000000000000000000000000'
+
+    else:
+        hashList = []
+        for transaction in data:
+            hashList.append(transaction['id'])
+
+        merkleRoot = merkle(hashList)
+
+    return merkleRoot, data
 
 
 # Function to compute the combines value of two hashes
-def hash2(a, b):
+def hash2(hash_a, hash_b):
     # Reverse inputs before and after hashing due to big-endian / little-endian nonsense
-    a1 = a[::-1]
-    b1 = b[::-1]
-    combinedHash = a1 + b1
+    combinedHash = hash_a[::-1] + hash_b[::-1]
 
+    # Compute hash of the combined hash values
     sha = hashlib.sha256()
     sha.update(combinedHash.encode('utf-8'))
     hash = sha.hexdigest()
@@ -100,7 +116,7 @@ def merkle(hashList):
         return hashList[0]
 
     newHashList = []
-    # Process pairs. For odd length, the last is skipped
+    # Create hash of pairs of values, for odd length the last is skipped
     for i in range(0, len(hashList) - 1, 2):
         newHashList.append(hash2(hashList[i], hashList[i+1]))
 
@@ -168,3 +184,11 @@ def sanitise_local_dir(port):
 
     # Save .txt file with info about what port a given node in running on
     node_txt(port)
+
+if __name__ == '__main__':
+    block = create_new_block()
+    print(block)
+
+    block.update_merkle()
+
+    print(block)

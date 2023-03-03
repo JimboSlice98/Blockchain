@@ -1,4 +1,8 @@
-import random as rd
+import hashlib
 
-for i in range(100):
-    print(rd.randint(0, 10))
+# Compute hash of the combined hash values
+sha = hashlib.sha256()
+sha.update(''.encode('utf-8'))
+hash = sha.hexdigest()
+
+print(hash)
