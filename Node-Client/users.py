@@ -6,11 +6,6 @@ class user_db(object):
     def __init__(self):
         self.users = []
 
-    # def db_to_dict(self):
-    #     data = {"trans": self.active_nodes}
-    #
-    #     return data
-
     # Method to save database to local directory
     def self_save(self):
         # Nest dictionaries to create a single object
@@ -36,9 +31,9 @@ class user_db(object):
                     print('Local user database not available')
                     return False
 
-        if self.users == []:
-            self.users = [{'user_id': 'Big Jim',
-                           'transactions': []}]
+        # if self.users == []:
+        #     self.users = [{'user_id': 'Big Jim',
+        #                    'transactions': []}]
 
     # def clean(self):
     #     self.sync_local_dir()
@@ -92,14 +87,3 @@ class user_db(object):
                     user['transactions'] = [*user['transactions'], txn['id']] if txn['id'] not in user['transactions'] else user['transactions']
 
         self.self_save()
-        print(self.users[:])
-
-        # self.users = []
-
-
-
-        # self.trans = [txn for txn in self.trans if txn not in valid_txns]
-        # print(f'Validated transactions: {valid_txns}')
-        # print(f'Remaining transactions: {self.trans}')
-
-

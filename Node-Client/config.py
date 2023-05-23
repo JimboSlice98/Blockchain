@@ -1,6 +1,6 @@
 CHAINDATA_DIR = 'chaindata/'
 NUM_ZEROS = 6
-NUM_TXNS = 6
+NUM_TXNS = 3
 
 server_addr = 'http://146.169.220.242:5050'
 

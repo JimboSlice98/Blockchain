@@ -11,6 +11,7 @@ from config import *
 from block import Block
 import database
 import transaction as txn
+import users
 
 
 # Function to create chain object from local directory
@@ -99,6 +100,13 @@ async def sync_overall(save=False):
         print(best_chain.txn_list())
 
     print("--- Blockchain sync time: %s seconds ---" % (time.time() - start_time))
+
+    # Update user database from blockchain data
+    txns = [block.data for block in best_chain.blocks]
+    txns = [transaction for block in txns for transaction in block]
+
+    users_db = users.user_db()
+    users_db.add_users(txns)
 
     return best_chain
 

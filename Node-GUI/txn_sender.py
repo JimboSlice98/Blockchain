@@ -78,7 +78,7 @@ for i in tqdm(range(0, 10)):
     txn = txn_gen(comp_names)
     print(txn)
 
-    requests.post('http://146.169.255.177:5000/transaction', json=txn)
-    requests.post('http://155.198.40.43:5000/transaction', json=txn)
-    requests.post('http://155.198.40.49:5000/transaction', json=txn)
+    # requests.post('http://146.169.255.177:5000/transaction', json=txn)
+    # requests.post('http://155.198.40.43:5000/transaction', json=txn)
+    # requests.post('http://155.198.40.49:5000/transaction', json=txn)
     requests.post('http://155.198.41.51:5000/transaction', json=txn)
