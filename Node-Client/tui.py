@@ -17,8 +17,7 @@ def menu_0():
 
 		# Enter a new transaction
 		case 1:
-			print('Not yet defined')
-			# return menu_2()
+			return menu_2()
 
 
 def menu_1():
@@ -28,7 +27,8 @@ def menu_1():
 	match userAnswers['ans']:
 		# Query blockchain transactions
 		case 0:
-			return menu_1()
+			print('Not yet defined')
+			# return menu_1()
 
 		# Query user data
 		case 1:
@@ -38,6 +38,40 @@ def menu_1():
 		# Back
 		case 2:
 			return menu_0()
+
+
+def menu_2():
+	os.system('cls')
+	userAnswers = menu.menu_2()
+
+	os.system('cls')
+
+	print('Transction Details:')
+	print(f'Lender: {userAnswers["lender"]}\n'
+		  f'Borrower: {userAnswers["borrower"]}\n'
+		  f'Security type: {userAnswers["type"]}\n'
+		  f'Price: {userAnswers["price"]}\n'
+		  f'Quantity:{userAnswers["quantity"]}\n'
+		  f'Expiration: {userAnswers["expiration"]}')
+
+	userAnswers = menu.menu_2_1()
+
+	match userAnswers['ans']:
+		# Yes
+		case 0:
+			print('Not yet defined')
+			# return menu_1()
+
+		# No
+		case 1:
+			menu_2()
+			# return menu_2()
+
+		# Back
+		case 2:
+			return menu_0()
+
+	return
 
 
 # while True:
@@ -51,14 +85,7 @@ ch = input('')
 # while True:
 if ch == ' ':
 	os.system('cls')
-
 	menu_0()
-
-	#
-	# # -------------------------- Game End ------------------------------
-	# os.system('cls')
-	# display(f"     Your      Score : 5", "banner3-D")
-	# time.sleep(4)
 
 # elif ch == 'q':
 # 	break

@@ -175,6 +175,20 @@ def update_status(port):
             print(error)
 
 
+def send_txn(txn):
+    # Initialise a database object from the local directory
+    db = database.node_db()
+    db.sync_local_dir()
+
+    # Send the transaction as a POST request to all nodes
+    for addr in db.active_nodes:
+        try:
+            requests.post('http://' + addr + '/transaction', json=txn)
+
+        except requests.exceptions.RequestException as error:
+            print(error)
+
+
 def sanitise_local_dir(port):
     if os.path.exists(CHAINDATA_DIR):
         shutil.rmtree(CHAINDATA_DIR)
