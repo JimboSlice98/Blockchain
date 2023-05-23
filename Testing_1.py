@@ -1,8 +1,13 @@
-import hashlib
+a = 11
 
-# Compute hash of the combined hash values
-sha = hashlib.sha256()
-sha.update(''.encode('utf-8'))
-hash = sha.hexdigest()
+if a > 20:
+    print('Here')
 
-print(hash)
+if a > 10:
+    print('Here 1')
+
+if a > 5:
+    print('Here 2')
+
+else:
+    print('Why?')
