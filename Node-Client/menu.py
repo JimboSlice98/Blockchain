@@ -71,7 +71,7 @@ def menu_2():
 
                  {'type': 'input',
                   'name': 'expiration',
-                  'message': 'Enter contract expiration date...'}]
+                  'message': 'Enter contract expiration date... (YYYY-MM-DD)'}]
 
     answers = prompt(questions, style=custom_style_3)
     return answers

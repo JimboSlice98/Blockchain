@@ -180,7 +180,7 @@ def send_txn(txn):
     db = database.node_db()
     db.sync_local_dir()
 
-    txn = {key: val for key, val in ([('id', None)] + list(txn.items()))}
+    txn = {key: val for key, val in ([('id', None)] + list(txn.items()) + [('trans_type', 'Origination')])}
     txn_str = str(txn['lender']) + str(txn['borrower']) + str(txn['type']) + str(txn['security']) + str(txn['price']) + str(txn['variance']) + str(txn['quantity']) + str(txn['expiration'])
     sha = hashlib.sha256()
     sha.update(txn_str.encode('utf-8'))

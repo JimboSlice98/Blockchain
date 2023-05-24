@@ -1,13 +1,12 @@
-a = 11
+import datetime
 
-if a > 20:
-    print('Here')
 
-if a > 10:
-    print('Here 1')
+date = datetime.date.today()
 
-if a > 5:
-    print('Here 2')
+record = '2023-05-24'
 
-else:
-    print('Why?')
+record = datetime.datetime.strptime(record, '%Y-%m-%d').date()
+print(date)
+print(record)
+
+print((record - date).days)
