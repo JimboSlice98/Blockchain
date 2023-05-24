@@ -1,6 +1,23 @@
 from PyInquirer import prompt
 from examples import custom_style_3
 from prompt_toolkit.validation import Validator, ValidationError
+import requests
+
+
+def tickerFinder(input):
+    key = 'EM80T3Q898M6VUIM'
+    # key = 'demo'
+
+    url = f'https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords={input}&apikey={key}'
+    r = requests.get(url)
+    data = r.json()
+
+    data_ticker = [match['1. symbol'] for match in data['bestMatches']]
+    data_name = [match['2. name'] for match in data['bestMatches']]
+
+    suggestions = dict(zip(data_ticker, data_name))
+
+    return suggestions
 
 
 class NumberValidator(Validator):
@@ -10,6 +27,22 @@ class NumberValidator(Validator):
         except ValueError:
             raise ValidationError(
                 message='Please enter a number',
+                cursor_position=len(document.text))  # Move cursor to end
+
+
+class TickerValidator(Validator):
+    def validate(self, document):
+        text_file = open("tickers.txt", "r")
+        tickers = text_file.read().splitlines()
+        text_file.close()
+
+        if document.text.upper() in tickers:
+            pass
+        else:
+            suggestions = tickerFinder(document.text)
+            # print("{" + "\n".join("{!r}: {!r},".format(k, v) for k, v in res.items()) + "}")
+            raise ValidationError(
+                message=f'Security symbol not found, did you mean: {suggestions}?',
                 cursor_position=len(document.text))  # Move cursor to end
 
 
@@ -53,7 +86,9 @@ def menu_2():
 
                  {'type': 'input',
                   'name': 'security',
-                  'message': 'Enter security information...'},
+                  'message': 'Enter security information...',
+                  'validate': TickerValidator,
+                  'filter': lambda val: val.upper()},
 
                  {'type': 'input',
                   'name': 'price',

@@ -12,6 +12,7 @@ import init
 import database
 import transaction as txn
 import utils
+import smart_contracts
 from config import *
 
 
@@ -152,6 +153,7 @@ if __name__ == '__main__':
 
     # Add the database cleaning,status update and validity sync jobs to the BackgroundScheduler
     sched.add_job(db.clean, 'interval', minutes=5, misfire_grace_time=None)
+    sched.add_job(smart_contracts.txn_reverse, 'interval', hours=2, misfire_grace_time=None)
     sched.add_job(utils.update_status, 'interval', kwargs={'port': port}, minutes=1, misfire_grace_time=None)
     # sched.add_job(sync.validity_sync, 'interval', seconds=30, misfire_grace_time=None)
     # sched.add_job(mine.mine_sched, 'interval', seconds=30, misfire_grace_time=None)

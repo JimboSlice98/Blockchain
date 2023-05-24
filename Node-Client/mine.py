@@ -9,7 +9,7 @@ import utils
 import sync
 import database
 import transaction as txn
-import users
+# import users
 
 
 sched = None
@@ -171,9 +171,9 @@ def validate_network_block_listener(network_block=None):
         txn_db = txn.trans_db()
         txn_db.remove(network_block.data)
 
-        # Add new users to local database
-        users_db = users.user_db()
-        users_db.add_users(network_block.data)
+        # # Add new users to local database
+        # users_db = users.user_db()
+        # users_db.add_users(network_block.data)
 
 
     # Start mining for the next block after the network sync or network block
