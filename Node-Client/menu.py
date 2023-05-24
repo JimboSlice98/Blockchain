@@ -28,9 +28,10 @@ def menu_1():
     questions = {'type': 'list',
                  'name': 'ans',
                  'message': 'Pick an option...',
-                 'choices': [{'name': 'Query blockchain transactions', 'value': 0},
-                             {'name': 'Query user data', 'value': 1},
-                             {'name': '↳ Back', 'value': 2}]}
+                 'choices': [{'name': 'See all', 'value': 0},
+                             {'name': 'Query by transaction ID', 'value': 1},
+                             {'name': 'Query by user ID', 'value': 2},
+                             {'name': '↳ Back', 'value': 3}]}
 
     answers = prompt(questions, style=custom_style_3)
     return answers
@@ -59,6 +60,10 @@ def menu_2():
                   'message': 'Enter current security price...'},
 
                  {'type': 'input',
+                  'name': 'variance',
+                  'message': 'Enter variance percentage...'},
+
+                 {'type': 'input',
                   'name': 'quantity',
                   'message': 'Enter quantity...',
                   'validate': NumberValidator,
@@ -79,6 +84,34 @@ def menu_2_1():
                  'choices': [{'name': 'Yes', 'value': 0},
                              {'name': 'No, re-enter information', 'value': 1},
                              {'name': '↳ Back', 'value': 2}]}
+
+    answers = prompt(questions, style=custom_style_3)
+    return answers
+
+
+def menu_transID():
+    questions = {'type': 'input',
+                  'name': 'trans_id',
+                  'message': 'Enter transaction ID...'}
+
+    answers = prompt(questions, style=custom_style_3)
+    return answers
+
+
+def menu_userID():
+    questions = {'type': 'input',
+                  'name': 'user_id',
+                  'message': 'Enter user ID...'}
+
+    answers = prompt(questions, style=custom_style_3)
+    return answers
+
+
+def menu_back():
+    questions = {'type': 'list',
+                 'name': 'ans',
+                 'message': 'Return to menu...',
+                 'choices': [{'name': '↳ Back', 'value': 0}]}
 
     answers = prompt(questions, style=custom_style_3)
     return answers

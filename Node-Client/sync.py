@@ -97,7 +97,11 @@ async def sync_overall(save=False):
 
         # Save the new chain in the local directory
         best_chain.self_save()
-        print(best_chain.txn_list())
+
+        # Remove transactions from local database
+        txn_db = txn.trans_db()
+        txn_db.remove(best_chain.txn_list())
+        # print(best_chain.txn_list())
 
     print("--- Blockchain sync time: %s seconds ---" % (time.time() - start_time))
 

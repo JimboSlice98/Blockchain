@@ -3,6 +3,8 @@ data = [{'id': 'a48f5d3eaf5567debc43f3986c1dec16908c2ab0b48713d9eaf07ebdfb609d8e
 users = [{'user_id': 'Big Jim', 'transactions': [1, 3]},
          {'user_id': 'Jimbo', 'transactions': [1, 2]}]
 
+users = {'user_id': 'Jimbo', 'transactions': [1, 2]}
+
 # for txn in data:
 #     print(txn)
 #     if not txn['lender'] in [id for id in users['user_id']]:
@@ -10,8 +12,9 @@ users = [{'user_id': 'Big Jim', 'transactions': [1, 3]},
 
 print(users)
 
-new_txn = 1
-
-users[0]['transactions'] = [*users[0]['transactions'], new_txn] if new_txn not in users[0]['transactions'] else users[0]['transactions']
+users = {key: val for key, val in ([('trans_id', 0)] + list(users.items()))}
 
 print(users)
+# users[0]['transactions'] = [*users[0]['transactions'], new_txn] if new_txn not in users[0]['transactions'] else users[0]['transactions']
+#
+# print(users)

@@ -49,6 +49,16 @@ def new_node():
     return jsonify(received=True)
 
 
+# Function to restart the database from fresh
+@node.route('/restart', methods=['POST'])
+def restart():
+    # Initialise a database object from the local directory
+    db = database.node_db()
+    db.self_save()
+
+    return jsonify(received=True)
+
+
 if __name__ == '__main__':
     # Initialise the database for storing addresses of active nodes on the network and update local directory
     db = database.node_db()

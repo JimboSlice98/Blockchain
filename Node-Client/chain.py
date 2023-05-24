@@ -1,3 +1,6 @@
+import pandas as pd
+
+# Import from custom scripts
 import transaction as txn
 
 
@@ -72,15 +75,26 @@ class Chain(object):
         return self.blocks[-1]
 
     def txn_list(self):
-        valid_trans = []
-        for block in self.blocks:
-            valid_trans = valid_trans + block.data
+        valid_trans = [block.data for block in self.blocks]
 
-        # Remove transactions from local database
-        txn_db = txn.trans_db()
-        txn_db.remove(valid_trans)
+        return valid_trans
 
-        return
+    def find_txn(self, type=None, key=None):
+        txns = self.txn_list()
+        txns = [transaction for block in txns for transaction in block]
+        df = pd.DataFrame(txns)
+
+        if type == 'user':
+            userTransactions = df.loc[(df['lender'] == key) | (df['borrower'] == key)]
+            return userTransactions
+
+        if type == 'transaction':
+            transactionDetails = df.loc[df['id'] == key]
+            return transactionDetails
+
+        else:
+            return df
+
 
     # NOT CURRENTLY USED, BUT COULD BE USED FOR TESTING
     def max_index(self):
