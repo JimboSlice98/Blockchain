@@ -17,11 +17,11 @@ def txn_gen(comp_names):
     #        'quantity': rd.randint(0, 100),
     #        'price': price,
     #        'strike': price + rd.randint(-20, 20),
-    #        'expiration': f'{rd.randint(2023, 2026)}-{rd.randint(1, 12)}-{rd.randint(1, 31)}',
+    #        'expiration': f'{rd.randint(2020, 2026)}-{rd.randint(10, 12)}-{rd.randint(10, 28)}',
     #        'trans_type': 'Origination'}
 
     txn = {'id': '',
-           'origin_id': '527690fcfe7d625c15956025c4199630b1ba6bd4207bdf608967d2166ffce5d3',
+           'origin_id': '8cdb5b0d1c6b0c7f8b7c8ecd9a7098204e372a9b45501e52a8575c8338ceb2bc',
            'trigger': 'Expiration',
            'trans_type': 'Reversal'}
 

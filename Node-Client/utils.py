@@ -175,16 +175,28 @@ def update_status(port):
             print(error)
 
 
-def send_txn(txn):
+def send_txn(txn, reverse=False):
     # Initialise a database object from the local directory
     db = database.node_db()
     db.sync_local_dir()
 
-    txn = {key: val for key, val in ([('id', None)] + list(txn.items()) + [('trans_type', 'Origination')])}
-    txn_str = str(txn['lender']) + str(txn['borrower']) + str(txn['type']) + str(txn['security']) + str(txn['price']) + str(txn['variance']) + str(txn['quantity']) + str(txn['expiration'])
+    if reverse:
+        txn = {'id': '',
+               'origin_id': txn,
+               'trigger': 'Expiration',
+               'trans_type': 'Reversal'}
+
+        txn_str = str(txn['origin_id']) + str(txn['trigger']) + str(txn['trans_type'])
+
+    else:
+        txn = {key: val for key, val in ([('id', None)] + list(txn.items()) + [('trans_type', 'Origination')])}
+        txn_str = str(txn['lender']) + str(txn['borrower']) + str(txn['type']) + str(txn['security']) + str(txn['price']) + str(txn['variance']) + str(txn['quantity']) + str(txn['expiration'])
+
     sha = hashlib.sha256()
     sha.update(txn_str.encode('utf-8'))
     txn['id'] = sha.hexdigest()
+
+    # print(txn)
 
     # Send the transaction as a POST request to all nodes
     for addr in db.active_nodes:

@@ -1,9 +1,12 @@
-import hashlib
+import datetime
 import pandas as pd
 
 # Import from custom scripts
-import chain
 import sync
+import utils
+
+
+pd.options.mode.chained_assignment = None  # default='warn'
 
 
 def txn_reverse():
@@ -17,12 +20,19 @@ def txn_reverse():
     # Dataframe containing the list of in progress transactions
     txn_pending = txn_origination[~txn_origination['id'].isin(txn_reversed)]
 
-    print(txn_all)
-    print()
-    print(txn_origination)
-    print()
-    print(txn_reversal)
-    print()
-    print(txn_pending)
+    # Convert expiration column to datetime format
+    txn_pending['expiration'] = pd.to_datetime(txn_pending['expiration'], format='%Y-%m-%d', errors='coerce')
+
+    # Create mask and select expired transactions
+    date = pd.to_datetime(datetime.date.today())
+    mask = (txn_pending['expiration'] <= date)
+    txn_expired = txn_pending.loc[mask]
+
+    # List of expired transaction ids
+    expired_ids = txn_expired['id'].to_list()
+
+    # Generate and send reversal transactions
+    for id in expired_ids:
+        utils.send_txn(id, reverse=True)
 
 txn_reverse()
